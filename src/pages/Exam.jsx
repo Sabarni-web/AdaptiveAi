@@ -140,7 +140,7 @@ export const Exam = () => {
           question={currentQuestion}
           answer={localAnswer}
           onAnswer={setLocalAnswer}
-          isFlagged={flagged.includes(currentQuestion.id)}
+          isFlagged={flagged.includes(currentQuestionIndex)}
           onFlag={flagQuestion}
           isLoading={saveStatus === 'saving'}
         />
@@ -168,8 +168,8 @@ export const Exam = () => {
         <ProgressBar
           current={currentQuestionIndex}
           total={config?.questionLimit || 5}
-          answered={Object.keys(answers).map((_, i) => i)}
-          flagged={flagged.map((id) => currentQuestionIndex)}
+          answered={Array.from({ length: currentQuestionIndex }).map((_, i) => i)}
+          flagged={flagged}
         />
       </div>
 

@@ -79,8 +79,8 @@ export const useExam = () => {
   };
 
   const flagQuestion = () => {
-    if (!currentQuestion) return;
-    dispatch(toggleFlaggedQuestion(currentQuestion.id));
+    if (currentQuestionIndex === undefined || currentQuestionIndex === null) return;
+    dispatch(toggleFlaggedQuestion(currentQuestionIndex));
   };
 
   const finishExam = async (sessId) => {
