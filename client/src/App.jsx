@@ -17,12 +17,16 @@ import { Dashboard } from './pages/Dashboard';
 import { Exam } from './pages/Exam';
 import { Result } from './pages/Result';
 import { Settings } from './pages/Settings';
+import { Profile } from './pages/Profile';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { QuestionBankPage } from './pages/QuestionBankPage';
 import { ExamSchedulerPage } from './pages/ExamSchedulerPage';
 import { LiveMonitorPage } from './pages/LiveMonitorPage';
 import { GradeReviewPage } from './pages/GradeReviewPage';
 import { UserManagementPage } from './pages/UserManagementPage';
+import { QuestionGenerator } from './pages/admin/QuestionGenerator';
+import { StudentExams } from './pages/StudentExams';
+import { StudentResults } from './pages/StudentResults';
 import { NotFound } from './pages/NotFound';
 
 // Protected Route Guard
@@ -65,13 +69,22 @@ export const App = () => {
       {/* Protected Dashboard & Core Routes */}
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/result/:sessionId" element={<Result />} />
 
         {/* Student Specific Routes */}
-        <Route path="/student/exams" element={<Navigate to="/dashboard" />} />
-        <Route path="/student/results" element={<Navigate to="/dashboard" />} />
+        <Route path="/student/exams" element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <StudentExams />
+          </ProtectedRoute>
+        } />
+        <Route path="/student/results" element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <StudentResults />
+          </ProtectedRoute>
+        } />
 
         {/* Teacher Specific Routes */}
         <Route
@@ -113,6 +126,14 @@ export const App = () => {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <UserManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/generator"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <QuestionGenerator />
             </ProtectedRoute>
           }
         />

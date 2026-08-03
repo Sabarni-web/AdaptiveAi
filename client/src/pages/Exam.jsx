@@ -86,10 +86,20 @@ export const Exam = () => {
     return () => socket.removeListeners();
   }, [socket]);
 
+  const [feedback, setFeedback] = useState(null); // { isCorrect, correctAnswer, explanation, marksAwarded }
+
   const handleNext = async () => {
     setSaveStatus('saving');
-    await submitAnswer(localAnswer, 30);
+    const response = await submitAnswer(localAnswer, 30);
     setSaveStatus('saved');
+    
+    if (response) {
+      setFeedback(response);
+      setTimeout(async () => {
+        setFeedback(null);
+        await loadNextQuestion(sessionId);
+      }, 2000);
+    }
   };
 
   const handleFinalSubmit = async () => {
@@ -118,7 +128,10 @@ export const Exam = () => {
       <div className="flex items-center justify-between border-b border-slate-800 pb-4">
         <div>
           <h2 className="text-lg font-bold text-white">{config?.title || 'Evaluation Session'}</h2>
-          <div className="mt-1">
+          <div className="mt-1 flex items-center gap-2">
+            <span className="bg-primary-900/50 text-primary-300 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-primary-800">
+              {currentQuestion.difficulty || 'Adaptive'}
+            </span>
             <AutoSaveIndicator status={saveStatus} />
           </div>
         </div>
@@ -126,7 +139,7 @@ export const Exam = () => {
           <Timer
             totalSeconds={timeRemaining}
             onTimeUp={handleFinalSubmit}
-            isRunning={!isPaused}
+            isRunning={!isPaused && !feedback}
           />
           <Button variant="danger" size="sm" onClick={() => setShowExitModal(true)}>
             Exit Exam
@@ -135,15 +148,33 @@ export const Exam = () => {
       </div>
 
       {/* Main Question Body */}
-      <div className="flex-1 flex items-center py-8">
+      <div className="flex-1 flex flex-col items-center py-8">
         <QuestionCard
           question={currentQuestion}
           answer={localAnswer}
           onAnswer={setLocalAnswer}
           isFlagged={flagged.includes(currentQuestionIndex)}
           onFlag={flagQuestion}
-          isLoading={saveStatus === 'saving'}
+          isLoading={saveStatus === 'saving' || !!feedback}
         />
+        
+        {/* Instant Feedback Overlay */}
+        {feedback && (
+          <div className="mt-6 w-full max-w-3xl animate-fade-in">
+            <div className={`p-4 rounded-xl border ${feedback.isCorrect ? 'bg-green-900/30 border-green-500 text-green-100' : 'bg-red-900/30 border-red-500 text-red-100'}`}>
+              <h3 className="text-xl font-bold mb-2">
+                {feedback.isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+              </h3>
+              {!feedback.isCorrect && (
+                <p className="mb-2"><strong>Correct Answer:</strong> {feedback.correctAnswer}</p>
+              )}
+              <p className="text-sm opacity-90"><strong>Explanation:</strong> {feedback.explanation}</p>
+              {feedback.isCorrect && (
+                <p className="mt-2 text-sm font-semibold text-green-300">+{feedback.marksAwarded} Marks Awarded</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer Navigation Controls */}
@@ -156,7 +187,7 @@ export const Exam = () => {
             <Button
               variant="primary"
               onClick={handleNext}
-              disabled={saveStatus === 'saving'}
+              disabled={saveStatus === 'saving' || !!feedback}
             >
               Submit &amp; Next &rarr;
             </Button>

@@ -1,0 +1,108 @@
+import React, { useState } from 'react';
+import { PageHeader } from '../../components/common/PageHeader';
+import { Card } from '../../components/common/Card';
+import { Button } from '../../components/common/Button';
+import apiClient from '../../services/apiClient';
+import { toast } from 'sonner';
+
+export const QuestionGenerator = () => {
+  const [subject, setSubject] = useState('Full Stack Engineering');
+  const [difficulty, setDifficulty] = useState('medium');
+  const [count, setCount] = useState(5);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState([]);
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await apiClient.post('/admin/generate-questions', {
+        subject,
+        difficulty,
+        count
+      });
+      setGeneratedQuestions(response.data.data);
+      toast.success(`Successfully generated ${response.data.data.length} questions!`);
+    } catch (error) {
+      toast.error('Failed to generate questions. ' + (error.response?.data?.message || ''));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6 animate-fade-in">
+      <PageHeader
+        title="AI Question Generator"
+        description="Generate robust multiple choice questions instantly using Gemini."
+      />
+
+      <Card title="Generator Settings" description="Define the parameters for AI generation.">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Subject / Topic</label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Difficulty</label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Question Count</label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200"
+            />
+          </div>
+        </div>
+        <div className="mt-6 flex gap-4">
+          <Button onClick={handleGenerate} disabled={isGenerating}>
+            {isGenerating ? 'Generating...' : 'Generate and Save'}
+          </Button>
+        </div>
+      </Card>
+
+      {generatedQuestions.length > 0 && (
+        <Card title="Generated Preview" description="Review the questions generated and saved to the database.">
+          <div className="flex flex-col gap-4">
+            {generatedQuestions.map((q, idx) => (
+              <div key={q._id || idx} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900">
+                <p className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Q{idx + 1}: {q.question}</p>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {q.options.map(opt => (
+                    <div key={opt.label} className={`p-2 text-sm rounded ${opt.text === q.correctAnswer ? 'bg-green-100 dark:bg-green-900/30 border border-green-500' : 'bg-slate-200 dark:bg-slate-800'}`}>
+                      {opt.label}. {opt.text}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2"><strong>Explanation:</strong> {q.explanation}</p>
+                <div className="mt-2 text-xs flex gap-2">
+                  <span className="px-2 py-1 bg-primary-100 text-primary-800 rounded dark:bg-primary-900/30 dark:text-primary-300">{q.difficulty}</span>
+                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded dark:bg-yellow-900/30 dark:text-yellow-300">{q.topic}</span>
+                  <span className="px-2 py-1 bg-slate-200 text-slate-700 rounded dark:bg-slate-700 dark:text-slate-300">Generated by AI</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+};
+export default QuestionGenerator;

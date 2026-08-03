@@ -14,7 +14,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Invalid input data',
-        details: err.errors.map(e => ({ field: e.path.join('.'), issue: e.message })),
+        details: err.issues.map((e: any) => ({ field: e.path.join('.'), issue: e.message })),
         timestamp: new Date().toISOString(),
         requestId
       }
@@ -48,12 +48,12 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     return;
   }
 
-  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError' || err.message === 'Invalid credentials' || err.message === 'Invalid refresh token' || err.message === 'User not found') {
     res.status(401).json({
       success: false,
       error: {
         code: 'UNAUTHORIZED',
-        message: 'Invalid or expired token',
+        message: err.message || 'Invalid or expired token',
         timestamp: new Date().toISOString(),
         requestId
       }

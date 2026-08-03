@@ -67,10 +67,10 @@ apiClient.interceptors.response.use(
           `${apiClient.defaults.baseURL}/auth/refresh`,
           { refreshToken: refreshTokenVal }
         );
-        const { token, refreshToken } = response.data;
-        store.dispatch(updateToken({ token, refreshToken }));
-        processQueue(null, token);
-        originalRequest.headers.Authorization = `Bearer ${token}`;
+        const { accessToken, refreshToken } = response.data.data;
+        store.dispatch(updateToken({ token: accessToken, refreshToken }));
+        processQueue(null, accessToken);
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);

@@ -28,7 +28,7 @@ export const Navbar = () => {
     {
       label: 'Profile',
       icon: <User className="h-4 w-4" />,
-      onClick: () => navigate('/settings?tab=profile'),
+      onClick: () => navigate('/profile'),
     },
     {
       label: 'Settings',

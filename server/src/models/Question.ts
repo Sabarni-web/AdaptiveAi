@@ -6,7 +6,7 @@ export interface IQuestion extends Document {
   topic?: string;
   question: string;
   type: 'MCQ' | 'DESCRIPTIVE';
-  difficulty: number;
+  difficulty: number | string; // Updated to string 'easy', 'medium', 'hard' or number
   discrimination: number;
   guessing: number;
   bloomLevel: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
@@ -15,13 +15,16 @@ export interface IQuestion extends Document {
   options?: Array<{ label: string; text: string }>;
   correctAnswer?: string;
   modelAnswer?: string;
+  explanation?: string;
   rubric?: Array<{
     criteria: string;
     description: string;
     weight: number;
     maxMarks: number;
   }>;
-  createdBy: mongoose.Types.ObjectId;
+  createdBy?: mongoose.Types.ObjectId;
+  generatedBy?: 'Human' | 'AI';
+  verified?: boolean;
   isActive: boolean;
   version: number;
   usageCount: number;
@@ -36,22 +39,25 @@ const QuestionSchema = new Schema<IQuestion>(
     topic: { type: String },
     question: { type: String, required: true },
     type: { type: String, enum: ['MCQ', 'DESCRIPTIVE'], required: true },
-    difficulty: { type: Number, required: true },
-    discrimination: { type: Number, required: true },
-    guessing: { type: Number, required: true },
-    bloomLevel: { type: String, enum: ['remember', 'understand', 'apply', 'analyze', 'evaluate', 'create'], required: true },
+    difficulty: { type: Schema.Types.Mixed, required: true },
+    discrimination: { type: Number, default: 1 },
+    guessing: { type: Number, default: 0 },
+    bloomLevel: { type: String, enum: ['remember', 'understand', 'apply', 'analyze', 'evaluate', 'create'], default: 'apply' },
     tags: [{ type: String }],
     marks: { type: Number, required: true },
     options: [{ label: String, text: String }],
     correctAnswer: { type: String },
     modelAnswer: { type: String },
+    explanation: { type: String },
     rubric: [{
       criteria: String,
       description: String,
       weight: Number,
       maxMarks: Number,
     }],
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    generatedBy: { type: String, enum: ['Human', 'AI'], default: 'Human' },
+    verified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     version: { type: Number, default: 1 },
     usageCount: { type: Number, default: 0 },
@@ -65,3 +71,4 @@ QuestionSchema.index({ tags: 1 });
 QuestionSchema.index({ isActive: 1 });
 
 export const Question = mongoose.model<IQuestion>('Question', QuestionSchema);
+

@@ -22,6 +22,7 @@ export const gradeDescriptiveWorker = new Worker('gradeDescriptive', async job =
 
   answer.aiGrade = {
     ...gradeResult,
+    plagiarismScore: 0,
     marksObtained: gradeResult.finalScore * question.marks,
     maxMarks: question.marks,
     similarityToModel: 0,

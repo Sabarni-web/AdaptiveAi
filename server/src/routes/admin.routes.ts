@@ -10,5 +10,8 @@ router.use(rbac(['admin', 'super_admin']));
 
 router.get('/users', adminController.getUsers);
 router.get('/system-health', adminController.getSystemHealth);
+router.post('/generate-questions', adminController.generateQuestions);
+router.get('/questions', adminController.getQuestions);
+router.delete('/questions/:id', adminController.deleteQuestion);
 
 export default router;

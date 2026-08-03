@@ -6,7 +6,7 @@ const authService = {
       const response = await apiClient.post('/auth/login', { email, password });
       return response.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         console.warn('Backend unavailable, returning mock login data.');
         const role = email.includes('teacher')
           ? 'teacher'
@@ -33,7 +33,7 @@ const authService = {
       const response = await apiClient.post('/auth/register', userData);
       return response.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         console.warn('Backend unavailable, returning mock registration.');
         return { success: true, message: 'Mock registration complete!' };
       }
@@ -45,7 +45,7 @@ const authService = {
       const response = await apiClient.post('/auth/forgot-password', { email });
       return response.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         return { success: true, message: 'Mock reset email sent!' };
       }
       throw error;
@@ -56,7 +56,7 @@ const authService = {
       const response = await apiClient.post('/auth/reset-password', { token, password });
       return response.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         return { success: true, message: 'Mock password reset complete!' };
       }
       throw error;

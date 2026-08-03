@@ -63,7 +63,7 @@ export const useExam = () => {
   };
 
   const submitAnswer = async (answerVal, timeSpent = 15) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion) return null;
     try {
       dispatch(setLocalAnswer({ questionId: currentQuestion.id, answer: answerVal }));
       const response = await examService.submitAnswer(sessionId, {
@@ -72,9 +72,10 @@ export const useExam = () => {
         timeSpent,
       });
       dispatch(updateAbilityState({ ability: response.ability }));
-      await loadNextQuestion(sessionId);
+      return response;
     } catch (err) {
       toast.error('Failed to submit answer.');
+      return null;
     }
   };
 

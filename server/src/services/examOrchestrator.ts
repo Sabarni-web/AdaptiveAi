@@ -3,6 +3,7 @@ import { Question, IQuestion } from '../models/Question';
 import { Result } from '../models/Result';
 import { irtClient } from './irtClient';
 import { queueService } from './queueService';
+import { aiService } from './aiService';
 import mongoose from 'mongoose';
 
 export class ExamOrchestrator {
@@ -19,64 +20,213 @@ export class ExamOrchestrator {
     return session;
   }
 
-  async getNextQuestion(sessionId: string): Promise<IQuestion | null> {
+  async getNextQuestion(sessionId: string): Promise<any> {
     const session = await ExamSession.findById(sessionId);
     if (!session || session.status !== 'in_progress') throw new Error('Invalid session');
 
-    // If in adaptive phase:
-    // Call Adaptive Engine: POST /select-question
-    /*
-    const selected = await irtClient.selectQuestion({
-      currentAbility: session.currentAbility,
-      answeredQuestions: session.questionsAsked.map(q => q.questionId.toString()),
-      subject: 'Math' // fetch from exam config
-    });
-    */
-    
-    // Check stopping rule
-    /*
-    const stopResult = await irtClient.checkStopping({
-      currentAbility: session.currentAbility,
-      answeredCount: session.questionsAsked.length,
-      confidenceInterval: [0, 0] // dummy
-    });
-    if (stopResult.shouldStop) {
-       session.stopReason = 'precision_reached';
-       await session.save();
-       return null;
+    const answeredCount = session.questionsAsked.length;
+    const questionLimit = 30;
+
+    if (answeredCount >= questionLimit) {
+      return { isStop: true };
     }
-    */
-    
-    // Return a dummy question for now
-    const question = await Question.findOne();
-    return question;
+
+    // Determine target difficulty
+    let targetDifficulty = 'easy';
+    if (session.currentAbility > 0.4) targetDifficulty = 'hard';
+    else if (session.currentAbility > 0) targetDifficulty = 'medium';
+
+    // Find questions that haven't been asked yet matching the difficulty
+    const askedIds = session.questionsAsked.map(q => q.questionId);
+    let question = await Question.findOne({ 
+      _id: { $nin: askedIds },
+      difficulty: targetDifficulty
+    });
+
+    if (!question) {
+      // Not enough questions in MongoDB -> Call Gemini
+      const newQuestions = await aiService.generateQuestions('Full Stack Engineering', targetDifficulty, 1);
+      if (newQuestions && newQuestions.length > 0) {
+        const savedQuestions = await Question.insertMany(newQuestions);
+        question = savedQuestions[0] as any;
+      } else {
+        return { isStop: true };
+      }
+    }
+
+    if (!question) {
+      return { isStop: true };
+    }
+
+    // Add to questionsAsked so it doesn't get asked again
+    session.questionsAsked.push({
+      questionId: question._id as mongoose.Types.ObjectId,
+      sequence: answeredCount + 1,
+      presentedAt: new Date()
+    });
+    await session.save();
+
+    return {
+      question: {
+        id: question._id.toString(),
+        type: question.type,
+        text: question.question,
+        options: question.options,
+        marks: question.marks,
+        difficulty: question.difficulty,
+        questionNumber: answeredCount + 1,
+        totalQuestions: questionLimit,
+      },
+      index: answeredCount,
+      status: 'adaptive',
+      isStop: false,
+    };
   }
 
-  async submitAnswer(sessionId: string, questionId: string, answer: string, timeSpent: number): Promise<void> {
+  async submitAnswer(sessionId: string, questionId: string, answer: string, timeSpent: number): Promise<any> {
     const session = await ExamSession.findById(sessionId);
     if (!session) throw new Error('Session not found');
 
-    // Save answer to StudentAnswer / DescriptiveAnswer
-    // Update session.questionsAsked
-    // Call Adaptive Engine: POST /estimate-ability
-    // Update session.currentAbility + abilityHistory
-    // Call Adaptive Engine: POST /check-stopping
-    // If should_stop -> mark session ready for submission
+    const askedQuestion = session.questionsAsked.find(q => q.questionId.toString() === questionId);
+    let isCorrect = false;
+    let explanation = '';
+    let correctAnswer = '';
+
+    if (askedQuestion) {
+      askedQuestion.answer = answer;
+      askedQuestion.answeredAt = new Date();
+      askedQuestion.timeSpent = timeSpent;
+
+      const question = await Question.findById(questionId);
+      if (question) {
+        correctAnswer = question.correctAnswer || '';
+        explanation = question.explanation || '';
+        if (question.type === 'MCQ') {
+          isCorrect = answer === question.correctAnswer;
+        } else {
+          isCorrect = answer.length > 30;
+        }
+        askedQuestion.isCorrect = isCorrect;
+
+        const oldAbility = session.currentAbility;
+        session.currentAbility = isCorrect ? oldAbility + 0.5 : oldAbility - 0.5;
+
+        session.abilityHistory.push({
+          questionIndex: session.questionsAsked.length - 1,
+          ability: session.currentAbility,
+          timestamp: new Date()
+        });
+      }
+    }
+
+    await session.save();
+    return {
+      isCorrect,
+      correctAnswer,
+      explanation,
+      marksAwarded: isCorrect ? 2 : 0,
+      ability: session.currentAbility,
+      success: true
+    };
   }
 
   async submitExam(sessionId: string): Promise<any> {
     const session = await ExamSession.findById(sessionId);
     if (!session || session.status !== 'in_progress') throw new Error('Invalid session');
 
-    // Calculate MCQ score
-    // Call Adaptive Engine: POST /calculate-score
-    // Generate Result document
-    // Update session status to 'completed'
+    // Run scoring logic (Every question is 2 marks)
+    const totalQuestions = session.questionsAsked.length;
+    const correctCount = session.questionsAsked.filter(q => q.isCorrect).length;
+    const maxScore = totalQuestions * 2;
+    const totalScore = correctCount * 2;
+    const scorePercentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+    let grade = 'Fail';
+    if (scorePercentage >= 90) grade = 'A';
+    else if (scorePercentage >= 80) grade = 'B';
+    else if (scorePercentage >= 70) grade = 'C';
+    else if (scorePercentage >= 50) grade = 'D';
+
     session.status = 'completed';
     session.completedAt = new Date();
+    session.totalScore = totalScore;
+    session.maxPossibleScore = maxScore;
+    session.percentage = scorePercentage;
+    session.grade = grade;
     await session.save();
-    
+
+    // Store in Result collection
+    const resultDoc = new Result({
+      sessionId: session._id,
+      studentId: session.studentId,
+      examConfigId: session.examConfigId,
+      score: totalScore,
+      maxScore: maxScore,
+      percentage: scorePercentage,
+      grade
+    });
+    await resultDoc.save();
+
     return session;
+  }
+
+  async getResult(sessionId: string): Promise<any> {
+    const session = await ExamSession.findById(sessionId);
+    if (!session) throw new Error('Session not found');
+
+    const totalQuestions = session.questionsAsked.length;
+    const correctCount = session.questionsAsked.filter(q => q.isCorrect).length;
+    const maxScore = totalQuestions * 2;
+    const totalScore = correctCount * 2;
+    const scorePercentage = session.percentage || 0;
+    const grade = session.grade || 'Fail';
+
+    const questionIds = session.questionsAsked.map(q => q.questionId);
+    const questions = await Question.find({ _id: { $in: questionIds } });
+
+    return {
+      score: { total: totalScore, max: maxScore, percentage: scorePercentage },
+      grade,
+      percentile: 85,
+      ability: session.currentAbility,
+      confidenceInterval: [session.currentAbility - 0.15, session.currentAbility + 0.15],
+      examTitle: 'Adaptive Assessment',
+      completedAt: session.completedAt || new Date(),
+      sections: [
+        { name: 'Core Subject Areas', score: totalScore, max: maxScore, percentage: scorePercentage, color: 'bg-primary-500' }
+      ],
+      history: session.abilityHistory.length > 0 ? session.abilityHistory : [
+        { questionIndex: 1, ability: 0.0, timestamp: new Date() }
+      ],
+      topics: [
+        { name: 'General', score: totalScore, max: maxScore, percentage: scorePercentage, questionsAttempted: totalQuestions }
+      ],
+      recommendations: [
+        {
+          topic: 'Review Incorrect Questions',
+          priority: 'high',
+          resources: []
+        }
+      ],
+      answers: session.questionsAsked.map(qa => {
+        const qDetail = questions.find(q => q._id.toString() === qa.questionId.toString());
+        return {
+          question: qDetail ? {
+            id: qDetail._id.toString(),
+            type: qDetail.type,
+            text: qDetail.question,
+            options: qDetail.options,
+            marks: qDetail.marks,
+          } : null,
+          studentAnswer: qa.answer,
+          correctAnswer: qDetail?.correctAnswer || qDetail?.modelAnswer || '',
+          isCorrect: qa.isCorrect,
+          marksObtained: qa.isCorrect ? 2 : 0,
+          maxMarks: 2,
+          aiExplanation: qDetail?.explanation || 'Explanation not available.'
+        };
+      })
+    };
   }
 
   async abandonExam(sessionId: string, reason: string): Promise<void> {

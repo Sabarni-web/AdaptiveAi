@@ -85,9 +85,9 @@ const examService = {
   startExam: async (examConfigId) => {
     try {
       const response = await apiClient.post('/exams/start', { examConfigId });
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         console.warn('Backend offline. Initiating mock exam session.');
         sessionState = {
           sessionId: `mock-session-${Date.now()}`,
@@ -114,9 +114,9 @@ const examService = {
   getNextQuestion: async (sessionId) => {
     try {
       const response = await apiClient.get(`/exams/${sessionId}/next-question`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         if (sessionState.currentQuestionIndex >= 5) {
           sessionState.isFinished = true;
           return { isStop: true };
@@ -148,9 +148,9 @@ const examService = {
         answer,
         timeSpent,
       });
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         const question = MOCK_QUESTIONS.find((q) => q.id === questionId);
         let isCorrect = false;
         if (question?.type === 'MCQ') {
@@ -183,9 +183,9 @@ const examService = {
   getExamStatus: async (sessionId) => {
     try {
       const response = await apiClient.get(`/exams/${sessionId}/status`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         return {
           sessionId,
           status: sessionState.isFinished ? 'completed' : 'adaptive',
@@ -199,9 +199,9 @@ const examService = {
   submitExam: async (sessionId) => {
     try {
       const response = await apiClient.post(`/exams/${sessionId}/submit`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         sessionState.isFinished = true;
         return { success: true };
       }
@@ -212,9 +212,9 @@ const examService = {
   getResult: async (sessionId) => {
     try {
       const response = await apiClient.get(`/exams/${sessionId}/result`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         return {
           score: { total: 8, max: 14, percentage: 57 },
           grade: 'B',
@@ -275,9 +275,9 @@ const examService = {
   getHistory: async () => {
     try {
       const response = await apiClient.get('/exams/history');
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         return [
           {
             sessionId: 'sess-1',
@@ -302,9 +302,9 @@ const examService = {
   abandonExam: async (sessionId) => {
     try {
       const response = await apiClient.post(`/exams/${sessionId}/abandon`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !error.response) {
         return { success: true };
       }
       throw error;

@@ -52,6 +52,7 @@ export const Sidebar = () => {
       case 'admin':
         return [
           { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+          { label: 'Question Generator', path: '/admin/generator', icon: <Database className="h-5 w-5" /> },
           { label: 'User Management', path: '/admin/users', icon: <Users className="h-5 w-5" /> },
           { label: 'Subjects', path: '/admin/subjects', icon: <BookOpen className="h-5 w-5" /> },
           { label: 'System Analytics', path: '/admin/analytics', icon: <ShieldCheck className="h-5 w-5" /> },

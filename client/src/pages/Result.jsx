@@ -14,6 +14,8 @@ import { Button } from '../components/common/Button';
 import { Loader } from '../components/common/Loader';
 import { toast } from 'sonner';
 
+import html2pdf from 'html2pdf.js';
+
 export const Result = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -37,6 +39,18 @@ export const Result = () => {
     setShowCert(true);
   };
 
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('report-container');
+    const opt = {
+      margin: 0.5,
+      filename: `exam_report_${sessionId}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -55,7 +69,7 @@ export const Result = () => {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8" id="report-container">
       {/* Top Header info */}
       <ResultSummary
         score={result.score}
@@ -66,7 +80,7 @@ export const Result = () => {
         examTitle={result.examTitle}
         completedAt={result.completedAt}
         onShare={handleShare}
-        onDownload={handleDownloadCert}
+        onDownload={handleDownloadPDF}
       />
 
       {/* Grid layouts for breakdowns and charts */}

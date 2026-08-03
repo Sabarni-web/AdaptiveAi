@@ -23,10 +23,10 @@ export const useAuth = () => {
       dispatch(loginSuccess(data));
       toast.success('Logged in successfully!');
       navigate('/dashboard');
-    } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || 'Login failed';
-      dispatch(loginFailure(errorMsg));
-      toast.error(errorMsg);
+    } catch (error) {
+      const msg = error.response?.data?.error?.message || error.response?.data?.message || 'Login failed';
+      dispatch(loginFailure(msg));
+      toast.error(msg);
     }
   };
 

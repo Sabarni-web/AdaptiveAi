@@ -34,8 +34,8 @@ export const Dashboard = () => {
   }
 
   const handleStartExam = () => {
-    // Starts the mock Full Stack evaluation config
-    startExam('mock-config-id');
+    // Starts the seeded Full Stack evaluation config
+    startExam('65f1a2b3c4d5e6f7a8b9c0d1');
   };
 
   const columns = [
