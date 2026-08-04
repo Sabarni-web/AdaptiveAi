@@ -90,7 +90,7 @@ export const Exam = () => {
 
   const handleNext = async () => {
     setSaveStatus('saving');
-    const response = await submitAnswer(localAnswer, 30);
+    const response = await submitAnswer(localAnswer || 'SKIP', 30);
     setSaveStatus('saved');
     
     if (response) {
@@ -137,8 +137,10 @@ export const Exam = () => {
         </div>
         <div className="flex items-center gap-4">
           <Timer
-            totalSeconds={timeRemaining}
-            onTimeUp={handleFinalSubmit}
+            key={currentQuestion?.id || 'timer'}
+            totalSeconds={30}
+            warningAt={10}
+            onTimeUp={handleNext}
             isRunning={!isPaused && !feedback}
           />
           <Button variant="danger" size="sm" onClick={() => setShowExitModal(true)}>

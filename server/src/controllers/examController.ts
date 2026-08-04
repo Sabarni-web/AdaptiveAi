@@ -16,7 +16,7 @@ export class ExamController {
           config: {
             title: 'Full Stack Engineering Evaluation',
             durationSeconds: 1800,
-            questionLimit: 30
+            questionLimit: 10
           }
         } 
       });

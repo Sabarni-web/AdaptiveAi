@@ -25,7 +25,7 @@ export class ExamOrchestrator {
     if (!session || session.status !== 'in_progress') throw new Error('Invalid session');
 
     const answeredCount = session.questionsAsked.length;
-    const questionLimit = 30;
+    const questionLimit = 10;
 
     if (answeredCount >= questionLimit) {
       return { isStop: true };
@@ -102,7 +102,9 @@ export class ExamOrchestrator {
         correctAnswer = question.correctAnswer || '';
         explanation = question.explanation || '';
         if (question.type === 'MCQ') {
-          isCorrect = answer === question.correctAnswer;
+          const selectedOption = question.options.find((o: any) => o.label === answer);
+          const selectedText = selectedOption ? selectedOption.text : answer;
+          isCorrect = selectedText === question.correctAnswer;
         } else {
           isCorrect = answer.length > 30;
         }
@@ -210,6 +212,11 @@ export class ExamOrchestrator {
       ],
       answers: session.questionsAsked.map(qa => {
         const qDetail = questions.find(q => q._id.toString() === qa.questionId.toString());
+        let studentAnswerText = qa.answer;
+        if (qDetail && qDetail.type === 'MCQ') {
+           const selectedOpt = qDetail.options.find((o: any) => o.label === qa.answer);
+           if (selectedOpt) studentAnswerText = selectedOpt.text;
+        }
         return {
           question: qDetail ? {
             id: qDetail._id.toString(),
@@ -218,7 +225,7 @@ export class ExamOrchestrator {
             options: qDetail.options,
             marks: qDetail.marks,
           } : null,
-          studentAnswer: qa.answer,
+          studentAnswer: studentAnswerText,
           correctAnswer: qDetail?.correctAnswer || qDetail?.modelAnswer || '',
           isCorrect: qa.isCorrect,
           marksObtained: qa.isCorrect ? 2 : 0,

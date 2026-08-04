@@ -117,20 +117,21 @@ const examService = {
       return response.data.data;
     } catch (error) {
       if (import.meta.env.DEV && !error.response) {
-        if (sessionState.currentQuestionIndex >= 5) {
+        if (sessionState.currentQuestionIndex >= 10) {
           sessionState.isFinished = true;
           return { isStop: true };
         }
-        const question = MOCK_QUESTIONS[sessionState.currentQuestionIndex];
+        const mockIndex = sessionState.currentQuestionIndex % MOCK_QUESTIONS.length;
+        const question = MOCK_QUESTIONS[mockIndex];
         return {
           question: {
-            id: question.id,
+            id: question.id + '-' + sessionState.currentQuestionIndex,
             type: question.type,
             text: question.text,
             options: question.options,
             marks: question.marks,
             questionNumber: sessionState.currentQuestionIndex + 1,
-            totalQuestions: 5,
+            totalQuestions: 10,
           },
           index: sessionState.currentQuestionIndex,
           status: 'adaptive',
@@ -151,7 +152,8 @@ const examService = {
       return response.data.data;
     } catch (error) {
       if (import.meta.env.DEV && !error.response) {
-        const question = MOCK_QUESTIONS.find((q) => q.id === questionId);
+        const baseQuestionId = questionId.split('-')[0];
+        const question = MOCK_QUESTIONS.find((q) => q.id === baseQuestionId);
         let isCorrect = false;
         if (question?.type === 'MCQ') {
           isCorrect = answer === question.correctOption;
@@ -174,6 +176,10 @@ const examService = {
         return {
           ability: sessionState.ability,
           success: true,
+          isCorrect,
+          correctAnswer: question?.correctOption || question?.modelAnswer || 'Correct Answer Unavailable',
+          explanation: question?.explanation || 'No explanation provided in mock data.',
+          marksAwarded: isCorrect ? question?.marks : 0,
         };
       }
       throw error;

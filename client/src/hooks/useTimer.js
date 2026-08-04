@@ -98,8 +98,8 @@ export const useTimer = (initialSeconds = 3600, warningThreshold = 300, onTimeUp
   return {
     timeRemaining,
     formattedTime: formatTime(timeRemaining),
-    isWarning: timeRemaining <= warningThreshold && timeRemaining > 60,
-    isCritical: timeRemaining <= 60,
+    isWarning: timeRemaining <= warningThreshold && timeRemaining > Math.floor(warningThreshold / 3),
+    isCritical: timeRemaining <= Math.floor(warningThreshold / 3),
     isRunning,
     start,
     pause,

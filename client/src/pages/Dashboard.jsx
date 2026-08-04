@@ -38,6 +38,17 @@ export const Dashboard = () => {
     startExam('65f1a2b3c4d5e6f7a8b9c0d1');
   };
 
+  const getAverageGrade = () => {
+    if (!history || history.length === 0) return 'N/A';
+    const total = history.reduce((acc, curr) => acc + (curr.score || 0), 0);
+    const avg = total / history.length;
+    if (avg >= 90) return 'A';
+    if (avg >= 80) return 'B';
+    if (avg >= 70) return 'C';
+    if (avg >= 60) return 'D';
+    return 'F';
+  };
+
   const columns = [
     { key: 'title', header: 'Exam Title' },
     {
@@ -97,7 +108,8 @@ export const Dashboard = () => {
             </div>
             <Button
               onClick={handleStartExam}
-              className="!bg-white !text-primary-750 hover:!bg-slate-50 flex items-center gap-2 border-0 font-bold"
+              className="flex items-center gap-2 border-0 font-bold"
+              style={{ backgroundColor: '#3b82f6', color: 'black' }}
             >
               <Play className="h-4 w-4 fill-current" />
               <span>Start Exam</span>
@@ -114,7 +126,7 @@ export const Dashboard = () => {
             </div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Average Grade</span>
-              <span className="text-lg font-black text-slate-800 dark:text-white">B+</span>
+              <span className="text-lg font-black text-slate-800 dark:text-white">{getAverageGrade()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-slate-700 dark:text-slate-200">System Standing</span>

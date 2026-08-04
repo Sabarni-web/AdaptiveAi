@@ -12,7 +12,7 @@ export class AIService {
       logger.error('GEMINI_API_KEY is not defined in environment variables');
     }
     this.genAI = new GoogleGenerativeAI(apiKey || '');
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
   }
 
   async generateQuestions(subject: string, difficulty: string, count: number): Promise<any[]> {
@@ -48,10 +48,10 @@ Constraints:
         const text = result.response.text().trim();
         
         let jsonStr = text;
-        if (jsonStr.startsWith('\`\`\`json')) {
-          jsonStr = jsonStr.substring(7, jsonStr.length - 3).trim();
-        } else if (jsonStr.startsWith('\`\`\`')) {
-          jsonStr = jsonStr.substring(3, jsonStr.length - 3).trim();
+        const startIndex = jsonStr.indexOf('[');
+        const endIndex = jsonStr.lastIndexOf(']');
+        if (startIndex !== -1 && endIndex !== -1) {
+          jsonStr = jsonStr.substring(startIndex, endIndex + 1);
         }
 
         const questions = JSON.parse(jsonStr);

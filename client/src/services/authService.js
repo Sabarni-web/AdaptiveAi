@@ -4,7 +4,12 @@ const authService = {
   login: async (email, password) => {
     try {
       const response = await apiClient.post('/auth/login', { email, password });
-      return response.data;
+      const { user, tokens } = response.data.data;
+      return {
+        user,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
     } catch (error) {
       if (import.meta.env.DEV && !error.response) {
         console.warn('Backend unavailable, returning mock login data.');
