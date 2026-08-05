@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
@@ -56,6 +56,13 @@ const PublicRoute = ({ children }) => {
 };
 
 export const App = () => {
+  const theme = useSelector((state) => state.ui.theme);
+
+  useEffect(() => {
+    document.documentElement.className = theme;
+    document.body.className = theme;
+  }, [theme]);
+
   return (
     <Routes>
       {/* Public Auth Routes */}

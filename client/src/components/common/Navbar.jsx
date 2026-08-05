@@ -45,17 +45,17 @@ export const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 bg-[#39FFB0] border-b border-hair shadow-sm z-50 flex items-center justify-between px-6 transition-colors duration-200" style={{ color: 'black' }}>
+    <nav className={`fixed top-0 left-0 right-0 h-16 border-b border-hair shadow-sm z-50 flex items-center justify-between px-6 transition-colors duration-200 ${theme === 'light' ? 'bg-black text-white' : 'bg-[#39FFB0] text-black'}`}>
       {/* Brand Logo & Burger */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => dispatch(toggleSidebar())}
-          className="lg:hidden text-black hover:text-gray-800 p-1 rounded-lg transition-colors"
+          className={`lg:hidden p-1 rounded-lg transition-colors ${theme === 'light' ? 'text-white hover:text-gray-200' : 'text-black hover:text-gray-800'}`}
         >
           <Menu className="h-6 w-6" />
         </button>
         <Link to="/dashboard" className="flex items-center gap-2">
-          <span className="text-xl font-extrabold tracking-tight text-black">
+          <span className={`text-xl font-extrabold tracking-tight ${theme === 'light' ? 'text-white' : 'text-black'}`}>
             AdaptiveAI
           </span>
         </Link>
@@ -63,11 +63,11 @@ export const Navbar = () => {
 
       {/* Global search */}
       <div className="hidden md:flex items-center relative w-80">
-        <Search className="absolute left-3 text-black h-4.5 w-4.5" />
+        <Search className={`absolute left-3 h-4.5 w-4.5 ${theme === 'light' ? 'text-white' : 'text-black'}`} />
         <input
           type="text"
           placeholder="Search exams, lessons, logs..."
-          className="w-full pl-10 pr-4 py-1.5 text-xs rounded-xl bg-transparent text-black placeholder-black border border-hair outline-none focus:ring-2 focus:ring-black transition-all"
+          className={`w-full pl-10 pr-4 py-1.5 text-xs rounded-xl bg-transparent border border-hair outline-none focus:ring-2 transition-all ${theme === 'light' ? 'text-white placeholder-gray-400 focus:ring-white' : 'text-black placeholder-black focus:ring-black'}`}
         />
       </div>
 
@@ -76,7 +76,7 @@ export const Navbar = () => {
         {/* Mobile Search Button */}
         <button
           onClick={() => setShowSearch(!showSearch)}
-          className="md:hidden text-black hover:text-gray-800 p-1.5 hover:bg-green-700 rounded-xl"
+          className={`md:hidden p-1.5 hover:bg-green-700 rounded-xl ${theme === 'light' ? 'text-white hover:text-gray-200' : 'text-black hover:text-gray-800'}`}
         >
           <Search className="h-5 w-5" />
         </button>
@@ -84,13 +84,13 @@ export const Navbar = () => {
         {/* Theme Toggle */}
         <button
           onClick={toggleThemeMode}
-          className="text-black hover:text-gray-800 p-1.5 hover:bg-green-700 rounded-xl transition-colors"
+          className={`p-1.5 hover:bg-green-700 rounded-xl transition-colors ${theme === 'light' ? 'text-white hover:text-gray-200' : 'text-black hover:text-gray-800'}`}
         >
           {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
 
         {/* Notifications */}
-        <button className="relative text-black hover:text-gray-800 p-1.5 hover:bg-green-700 rounded-xl transition-colors">
+        <button className={`relative p-1.5 hover:bg-green-700 rounded-xl transition-colors ${theme === 'light' ? 'text-white hover:text-gray-200' : 'text-black hover:text-gray-800'}`}>
           <Bell className="h-5 w-5" />
           {notifications.length > 0 && (
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
@@ -108,7 +108,7 @@ export const Navbar = () => {
                 size="sm"
                 status="online"
               />
-              <span className="hidden sm:inline text-sm font-semibold text-black">
+              <span className={`hidden sm:inline text-sm font-semibold ${theme === 'light' ? 'text-white' : 'text-black'}`}>
                 {user?.name || 'Account'}
               </span>
             </button>

@@ -24,6 +24,25 @@ body {
   min-height: 100vh;
 }
 
+body.light {
+  background: white;
+  color: black;
+}
+
+body.light .card {
+  background: white;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+body.light .card .text-primary {
+  color: #111827 !important;
+}
+
+body.light .card .text-secondary {
+  color: #4b5563 !important;
+}
+
 /* Glass / floating card, like Verda's stat cards */
 .card {
   background: linear-gradient(180deg, var(--bg-surface) 0%, #0A1310 100%);
@@ -61,6 +80,14 @@ body {
 .btn-mint:hover {
   box-shadow: 0 0 24px 4px var(--mint-glow);
   transform: translateY(-1px);
+}
+
+body.light .btn-mint {
+  background: black;
+  color: white;
+}
+body.light .btn-mint:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 /* Sidebar active nav item glow, replaces the current solid-blue block */

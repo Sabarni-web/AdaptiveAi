@@ -39,7 +39,7 @@ export const Dropdown = ({
       {isOpen && (
         <div
           className={clsx(
-            'absolute mt-2 w-56 rounded-xl bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 focus:outline-none z-50 transition-all duration-100',
+            'absolute mt-2 w-56 rounded-xl bg-slate-800 shadow-lg border border-slate-700 py-1.5 focus:outline-none z-50 transition-all duration-100',
             align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'
           )}
         >
@@ -61,10 +61,10 @@ export const Dropdown = ({
                   setIsOpen(false);
                 }}
                 className={clsx(
-                  'w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed',
+                  'w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed',
                   item.danger
-                    ? 'text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300'
-                    : 'text-slate-700 dark:text-slate-200'
+                    ? 'text-red-400 hover:text-red-300'
+                    : 'text-white hover:text-gray-200'
                 )}
               >
                 {item.icon && <span className="text-slate-400">{item.icon}</span>}

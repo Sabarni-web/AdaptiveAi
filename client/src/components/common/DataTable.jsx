@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { ArrowUpDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
+import { useSelector } from 'react-redux';
 
 export const DataTable = ({
   columns = [],
@@ -15,6 +16,7 @@ export const DataTable = ({
   emptyState,
   isLoading = false,
 }) => {
+  const theme = useSelector((state) => state.ui.theme);
   const [selectedIds, setSelectedIds] = useState([]);
 
   const handleSelectAll = (e) => {
@@ -44,9 +46,9 @@ export const DataTable = ({
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Table Shell */}
-      <div className="w-full overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 shadow-sm">
+      <div className={`w-full overflow-x-auto border rounded-xl shadow-sm ${theme === 'light' ? 'bg-white border-slate-200 text-slate-800' : 'bg-black border-slate-700 text-white'}`}>
         <table className="w-full text-left text-sm border-collapse">
-          <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-205 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold sticky top-0 z-10">
+          <thead className={`border-b font-bold sticky top-0 z-10 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-black border-slate-700 text-white'}`}>
             <tr>
               {selectable && (
                 <th className="px-6 py-4 w-12">
@@ -62,7 +64,7 @@ export const DataTable = ({
                 <th
                   key={col.key}
                   style={{ width: col.width }}
-                  className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className={`px-6 py-4 cursor-pointer transition-colors ${theme === 'light' ? 'hover:bg-slate-100' : 'hover:bg-slate-800'}`}
                   onClick={() => {
                     if (col.sortable && sorting) {
                       const dir =
@@ -80,7 +82,7 @@ export const DataTable = ({
               {rowActions.length > 0 && <th className="px-6 py-4 w-16 text-right">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-200">
+          <tbody className={`divide-y ${theme === 'light' ? 'divide-slate-100 text-slate-800' : 'divide-slate-700 text-white'}`}>
             {isLoading ? (
               <tr>
                 <td colSpan={columns.length + (selectable ? 1 : 0) + (rowActions.length > 0 ? 1 : 0)} className="px-6 py-12 text-center text-slate-400">
@@ -101,8 +103,9 @@ export const DataTable = ({
                   <tr
                     key={id}
                     className={clsx(
-                      'hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors',
-                      isSelected && 'bg-primary-50/30 dark:bg-primary-950/10'
+                      'transition-colors',
+                      theme === 'light' ? 'hover:bg-slate-50' : 'hover:bg-slate-800',
+                      isSelected && (theme === 'light' ? 'bg-primary-50/30' : 'bg-primary-950/30')
                     )}
                   >
                     {selectable && (
@@ -125,7 +128,7 @@ export const DataTable = ({
                         <Dropdown
                           align="right"
                           trigger={
-                            <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+                            <button className={`text-slate-400 hover:text-slate-600 focus:outline-none ${theme === 'light' ? '' : 'hover:text-slate-200'}`}>
                               <MoreHorizontal className="h-5 w-5" />
                             </button>
                           }
@@ -146,8 +149,8 @@ export const DataTable = ({
 
       {/* Pagination Footer */}
       {pagination && totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-black border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+          <div className="text-xs text-slate-600 dark:text-white">
             Showing <span className="font-semibold">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
             <span className="font-semibold">
               {Math.min(pagination.page * pagination.limit, pagination.total)}
