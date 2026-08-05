@@ -13,14 +13,14 @@ export const Button = ({
   type = 'button',
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-void disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 focus:ring-slate-500',
-    danger: 'bg-danger text-white hover:bg-red-600 focus:ring-red-500',
-    ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 focus:ring-slate-500',
-    outline: 'border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 focus:ring-primary-500',
+    primary: 'btn-mint',
+    secondary: 'bg-surface-2 text-primary hover:bg-surface focus:ring-mint',
+    danger: 'bg-red-soft text-void hover:opacity-90 focus:ring-red-soft',
+    ghost: 'bg-transparent text-secondary hover:bg-surface-2 hover:text-primary focus:ring-mint',
+    outline: 'border border-hair text-primary bg-transparent hover:bg-surface-2 focus:ring-mint',
   };
 
   const sizes = {

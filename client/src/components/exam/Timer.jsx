@@ -43,7 +43,7 @@ export const Timer = ({
   }, [formattedTime, isRunning]);
 
   return (
-    <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl">
+    <div className="flex items-center gap-3 bg-surface border border-hair px-4 py-2 rounded-xl">
       <div className="relative h-6 w-6">
         {/* Ring indicator */}
         <svg className="h-full w-full transform -rotate-90">
@@ -51,7 +51,7 @@ export const Timer = ({
             cx="12"
             cy="12"
             r="9"
-            className="stroke-slate-800 fill-none"
+            className="stroke-hair fill-none"
             strokeWidth="2"
           />
           <circle
@@ -60,7 +60,7 @@ export const Timer = ({
             r="9"
             className={clsx(
               'fill-none stroke-current transition-all duration-300',
-              isCritical ? 'text-red-500 animate-pulse' : isWarning ? 'text-yellow-500' : 'text-primary-500'
+              timeRemaining < 60 ? 'text-mint animate-pulse' : 'text-mint-dim'
             )}
             strokeWidth="2"
             strokeDasharray={56.5}
@@ -71,7 +71,7 @@ export const Timer = ({
       <span
         className={clsx(
           'text-base font-bold font-mono tracking-wider transition-colors duration-200',
-          isCritical ? 'text-red-500 animate-pulse' : isWarning ? 'text-yellow-500' : 'text-slate-100'
+          timeRemaining < 60 ? 'text-mint animate-pulse' : 'text-primary'
         )}
       >
         {formattedTime}

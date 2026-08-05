@@ -21,22 +21,23 @@ export const StudentExams = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <Card
-          className="bg-gradient-to-br from-primary-600 to-indigo-700 text-white border-0 flex flex-col justify-between gap-6 !p-8 shadow-xl shadow-primary-500/10 hover:shadow-primary-500/20 transition-all duration-300 transform hover:-translate-y-1"
+          className="card animate-in flex flex-col justify-between gap-6 !p-8"
+          style={{ animationDelay: '80ms' }}
         >
           <div className="flex flex-col gap-2">
-            <span className="bg-primary-500/30 text-primary-200 border border-primary-400/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider w-fit">
+            <span className="bg-mint/10 text-mint border border-mint/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider w-fit">
               Assigned Evaluation
             </span>
             <h2 className="text-xl md:text-2xl font-black leading-tight mt-1">
               Full Stack Engineering Evaluation
             </h2>
-            <p className="text-sm text-primary-100 font-medium">
+            <p className="text-sm text-secondary font-medium">
               Take the computer science adaptive evaluation test containing algorithmic and system design questions.
             </p>
           </div>
 
           <div className="flex items-center justify-between mt-4">
-            <div className="flex gap-4 text-xs font-semibold text-primary-200">
+            <div className="flex gap-4 text-xs font-semibold text-secondary">
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" /> 30 Minutes
               </span>
@@ -46,7 +47,8 @@ export const StudentExams = () => {
             </div>
             <Button
               onClick={handleStartExam}
-              className="!bg-white !text-primary-750 hover:!bg-slate-50 flex items-center gap-2 border-0 font-bold shadow-md"
+              variant="primary"
+              className="flex items-center gap-2"
             >
               <Play className="h-4 w-4 fill-current" />
               <span>Start Exam</span>

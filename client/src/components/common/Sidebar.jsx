@@ -69,7 +69,7 @@ export const Sidebar = () => {
   return (
     <aside
       className={clsx(
-        'fixed top-16 bottom-0 left-0 bg-slate-50 dark:bg-slate-800/50 border-r border-slate-205 dark:border-slate-800/80 transition-all duration-300 z-40 flex flex-col justify-between',
+        'fixed top-16 bottom-0 left-0 bg-surface border-r border-hair transition-all duration-300 z-40 flex flex-col justify-between',
         sidebarCollapsed ? 'w-20' : 'w-64',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}
@@ -81,10 +81,10 @@ export const Sidebar = () => {
             to={item.path}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all group duration-150',
+                'nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all group duration-150',
                 isActive
-                  ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800'
+                  ? 'active'
+                  : 'text-secondary hover:text-primary hover:bg-surface-2'
               )
             }
           >
@@ -102,10 +102,10 @@ export const Sidebar = () => {
       </div>
 
       {/* Collapse Toggle Footer */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end">
+      <div className="p-4 border-t border-hair flex items-center justify-end">
         <button
           onClick={() => dispatch(toggleSidebarCollapse())}
-          className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="text-secondary hover:text-primary p-2 rounded-xl hover:bg-surface-2 transition-colors"
         >
           {sidebarCollapsed ? (
             <ChevronRight className="h-5 w-5" />

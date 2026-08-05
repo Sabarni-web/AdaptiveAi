@@ -4,18 +4,18 @@ import clsx from 'clsx';
 
 export const HeatMap = ({ data = [], title = 'Topic Performance Map' }) => {
   const getIntensityClass = (score) => {
-    if (score >= 85) return 'bg-green-600 dark:bg-green-700 text-white';
-    if (score >= 70) return 'bg-green-400 dark:bg-green-500 text-slate-900';
-    if (score >= 50) return 'bg-yellow-400 dark:bg-yellow-500 text-slate-900';
-    if (score >= 35) return 'bg-orange-400 dark:bg-orange-500 text-slate-900';
-    return 'bg-red-500 dark:bg-red-650 text-white';
+    if (score >= 85) return 'tile-green text-primary';
+    if (score >= 70) return 'tile-green opacity-80 text-primary';
+    if (score >= 50) return 'tile-amber text-primary';
+    if (score >= 35) return 'tile-amber opacity-80 text-primary';
+    return 'tile-red text-primary';
   };
 
   return (
     <Card title={title} description="Color intensity corresponds to the level of topic proficiency.">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
         {data.length === 0 ? (
-          <div className="col-span-full py-8 text-center text-slate-400 text-sm">
+          <div className="col-span-full py-8 text-center text-secondary text-sm">
             No topic performance logged.
           </div>
         ) : (
@@ -23,7 +23,7 @@ export const HeatMap = ({ data = [], title = 'Topic Performance Map' }) => {
             <div
               key={idx}
               className={clsx(
-                'p-4 rounded-xl flex flex-col justify-between gap-3 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:scale-[1.02]',
+                'p-4 rounded-xl flex flex-col justify-between gap-3 shadow-sm transition-all hover:scale-[1.02]',
                 getIntensityClass(item.score)
               )}
             >

@@ -42,14 +42,14 @@ export const ResultSummary = ({
   };
 
   return (
-    <Card className="flex flex-col gap-6 !p-8 border-slate-200 dark:border-slate-800">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 border-b border-slate-100 dark:border-slate-700/60 pb-6">
+    <Card className="card animate-in flex flex-col gap-6 !p-8">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 border-b border-hair pb-6">
         <div className="flex flex-col gap-2">
           <Badge variant="default" className="w-fit">Completed Evaluation</Badge>
-          <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white leading-tight">
+          <h2 className="text-xl md:text-2xl font-black text-primary leading-tight">
             {examTitle}
           </h2>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <div className="flex items-center gap-2 text-xs font-semibold text-secondary">
             <Calendar className="h-4 w-4" />
             <span>Completed on {new Date(completedAt).toLocaleDateString()}</span>
           </div>
@@ -69,41 +69,45 @@ export const ResultSummary = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Core Percentage Score */}
-        <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex flex-col items-center justify-center text-center gap-2">
-          <span className="text-3xl font-black text-slate-900 dark:text-white">
-            {score.total} <span className="text-sm font-semibold text-slate-400">/ {score.max}</span>
+        <div className="bg-surface-2 p-5 rounded-2xl border border-hair flex flex-col items-center justify-center text-center gap-2">
+          <span className="adaptive-ring">
+            <span className="text-3xl font-black text-primary relative z-10">
+              {score.total} <span className="text-sm font-semibold text-secondary">/ {score.max}</span>
+            </span>
           </span>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
             Total Marks ({score.percentage}%)
           </span>
         </div>
 
         {/* Evaluation Grade */}
-        <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex flex-col items-center justify-center text-center gap-2">
-          <Badge variant={getGradeColor(grade)} size="md" className="text-base px-3 py-1 font-black">
-            {grade}
-          </Badge>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+        <div className="bg-surface-2 p-5 rounded-2xl border border-hair flex flex-col items-center justify-center text-center gap-2">
+          <span className="adaptive-ring">
+            <Badge variant={getGradeColor(grade)} size="md" className="text-base px-3 py-1 font-black relative z-10">
+              {grade}
+            </Badge>
+          </span>
+          <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
             Assigned Grade
           </span>
         </div>
 
         {/* Global Percentile */}
-        <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex flex-col items-center justify-center text-center gap-2">
-          <span className="text-3xl font-black text-primary-600 dark:text-primary-400 flex items-center gap-0.5">
+        <div className="bg-surface-2 p-5 rounded-2xl border border-hair flex flex-col items-center justify-center text-center gap-2">
+          <span className="text-3xl font-black text-primary flex items-center gap-0.5">
             {percentile} <Percent className="h-5 w-5 stroke-[2.5]" />
           </span>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
             Global Percentile
           </span>
         </div>
 
         {/* Ability Score */}
-        <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex flex-col items-center justify-center text-center gap-2">
-          <span className="text-2xl font-black text-indigo-650 dark:text-indigo-400">
+        <div className="bg-surface-2 p-5 rounded-2xl border border-hair flex flex-col items-center justify-center text-center gap-2">
+          <span className="text-2xl font-black text-primary">
             &theta; = {ability.toFixed(2)}
           </span>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
             Ability (IRT Score)
           </span>
         </div>

@@ -40,14 +40,14 @@ export const ForgotPassword = () => {
       <div className="flex flex-col gap-5 text-center items-center py-4">
         <CheckCircle2 className="h-14 w-14 text-green-500 stroke-[1.5]" />
         <div className="flex flex-col gap-1">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Check your email</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+          <h3 className="text-lg font-bold text-primary">Check your email</h3>
+          <p className="text-xs text-secondary max-w-xs mx-auto leading-relaxed">
             If an account is associated with that address, we have sent instructions to reset your password.
           </p>
         </div>
         <Link
           to="/login"
-          className="flex items-center gap-1.5 text-xs font-bold text-primary-650 hover:underline mt-2"
+          className="flex items-center gap-1.5 text-xs font-bold text-mint hover:text-mint-dim hover:underline mt-2"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to sign in</span>
@@ -59,10 +59,10 @@ export const ForgotPassword = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-xl font-bold text-primary">
           Reset password
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-secondary">
           Enter your email and we'll send you instructions to reset your password.
         </p>
       </div>
@@ -83,7 +83,7 @@ export const ForgotPassword = () => {
 
       <Link
         to="/login"
-        className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+        className="flex items-center justify-center gap-1.5 text-xs font-bold text-secondary hover:text-primary transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         <span>Back to sign in</span>

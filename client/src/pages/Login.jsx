@@ -31,10 +31,10 @@ export const Login = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-xl font-bold text-primary">
           Welcome back
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-secondary">
           Please enter your details to sign in to your account.
         </p>
       </div>
@@ -60,7 +60,7 @@ export const Login = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="focus:outline-none hover:text-slate-700 dark:hover:text-slate-350"
+              className="focus:outline-none hover:text-primary transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -73,15 +73,15 @@ export const Login = () => {
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+            className="h-4 w-4 rounded border-hair bg-surface-2 text-mint focus:ring-mint focus:ring-offset-void"
           />
-          <span className="text-xs text-slate-600 dark:text-slate-400 font-medium select-none">
+          <span className="text-xs text-secondary font-medium select-none">
             Remember me
           </span>
         </label>
         <Link
           to="/forgot-password"
-          className="text-xs font-semibold text-primary-650 hover:underline"
+          className="text-xs font-semibold text-mint hover:text-mint-dim hover:underline"
         >
           Forgot password?
         </Link>
@@ -93,9 +93,9 @@ export const Login = () => {
 
       <div className="relative flex items-center justify-center my-2">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+          <div className="w-full border-t border-hair" />
         </div>
-        <span className="relative bg-white dark:bg-slate-800 px-3 text-[10px] uppercase font-bold text-slate-400">
+        <span className="relative bg-surface px-3 text-[10px] uppercase font-bold text-secondary">
           Or continue with
         </span>
       </div>
@@ -115,9 +115,9 @@ export const Login = () => {
         </Button>
       </div>
 
-      <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
+      <p className="text-center text-xs text-secondary mt-2">
         Don't have an account?{' '}
-        <Link to="/register" className="font-bold text-primary-650 hover:underline">
+        <Link to="/register" className="font-bold text-mint hover:text-mint-dim hover:underline">
           Sign up
         </Link>
       </p>

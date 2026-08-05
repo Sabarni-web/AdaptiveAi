@@ -31,18 +31,18 @@ export const MCQ = ({
             disabled={disabled}
             onClick={() => onSelect(opt.label)}
             className={clsx(
-              'w-full text-left px-5 py-4 rounded-xl border-2 transition-all flex items-center gap-4 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed',
+              'w-full text-left px-5 py-4 rounded-xl transition-all flex items-center gap-4 focus:outline-none focus:ring-2 focus:ring-mint disabled:opacity-50 disabled:cursor-not-allowed',
               isSelected
-                ? 'border-primary-500 bg-primary-50/10 dark:bg-primary-950/20 text-primary-900 dark:text-primary-300 font-bold'
-                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
+                ? 'border border-hair border-l-[4px] border-l-mint bg-surface text-primary font-bold shadow-[0_0_15px_-3px_var(--mint-glow)]'
+                : 'border border-hair bg-surface-2 text-secondary hover:text-primary hover:bg-surface'
             )}
           >
             <span
               className={clsx(
                 'h-8 w-8 flex items-center justify-center rounded-lg font-bold text-xs shrink-0 select-none border',
                 isSelected
-                  ? 'bg-primary-600 border-primary-600 text-white'
-                  : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                  ? 'bg-mint border-mint text-void'
+                  : 'bg-void border-hair text-secondary'
               )}
             >
               {opt.label}

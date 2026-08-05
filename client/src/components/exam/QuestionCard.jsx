@@ -18,14 +18,14 @@ export const QuestionCard = ({
   const sanitizedHTML = DOMPurify.sanitize(question.text);
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-3xl mx-auto bg-slate-800 border border-slate-750 p-6 rounded-2xl shadow-lg transition-colors">
+    <div className="flex flex-col gap-6 w-full max-w-3xl mx-auto bg-surface border border-hair p-6 rounded-2xl shadow-lg transition-colors">
       {/* Top Meta Bar */}
-      <div className="flex items-center justify-between border-b border-slate-700 pb-4">
+      <div className="flex items-center justify-between border-b border-hair pb-4">
         <div className="flex items-center gap-3">
-          <span className="bg-primary-950 text-primary-400 border border-primary-900/50 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
+          <span className="bg-mint/10 text-mint border border-mint/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
             Question {question.questionNumber} of {question.totalQuestions}
           </span>
-          <span className="bg-slate-700 text-slate-300 px-3 py-1 rounded-lg text-xs font-semibold">
+          <span className="bg-surface-2 text-secondary border border-hair px-3 py-1 rounded-lg text-xs font-semibold">
             {question.marks} {question.marks === 1 ? 'Mark' : 'Marks'}
           </span>
         </div>
@@ -34,8 +34,8 @@ export const QuestionCard = ({
           className={clsx(
             'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition-all',
             isFlagged
-              ? 'border-yellow-600 bg-yellow-950/20 text-yellow-500 font-bold'
-              : 'border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200'
+              ? 'border-amber-soft bg-amber-soft/10 text-amber-soft font-bold'
+              : 'border-hair hover:border-mint/50 text-secondary hover:text-primary'
           )}
         >
           <Star className={clsx('h-3.5 w-3.5', isFlagged && 'fill-current')} />
@@ -45,7 +45,7 @@ export const QuestionCard = ({
 
       {/* Question Text */}
       <div
-        className="text-base md:text-lg text-slate-100 font-medium leading-relaxed"
+        className="text-base md:text-lg text-primary font-medium leading-relaxed"
         dangerouslySetInnerHTML={{ __html: sanitizedHTML }}
       />
 

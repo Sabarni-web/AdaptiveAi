@@ -71,10 +71,10 @@ export const Register = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-xl font-bold text-primary">
           Create account
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-secondary">
           Get started with our intelligent adaptive testing platform today.
         </p>
       </div>
@@ -117,7 +117,7 @@ export const Register = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="focus:outline-none hover:text-slate-700 dark:hover:text-slate-350"
+              className="focus:outline-none hover:text-primary transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -126,11 +126,11 @@ export const Register = () => {
         />
         {passwordVal && (
           <div className="flex flex-col gap-1 mt-1">
-            <div className="flex justify-between text-[10px] font-semibold text-slate-500">
+            <div className="flex justify-between text-[10px] font-semibold text-secondary">
               <span>Password strength:</span>
               <span className="font-bold">{passwordStrength.text}</span>
             </div>
-            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden">
               <div
                 className={clsx('h-full transition-all duration-350', passwordStrength.color)}
                 style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
@@ -153,12 +153,12 @@ export const Register = () => {
         <label className="flex items-start gap-2.5 cursor-pointer">
           <input
             type="checkbox"
-            className="h-4 w-4 mt-0.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+            className="h-4 w-4 mt-0.5 rounded border-hair bg-surface-2 text-mint focus:ring-mint focus:ring-offset-void"
             {...register('terms')}
           />
-          <span className="text-xs text-slate-600 dark:text-slate-400 font-medium select-none">
+          <span className="text-xs text-secondary font-medium select-none">
             I accept the{' '}
-            <a href="#terms" className="text-primary-650 hover:underline">
+            <a href="#terms" className="text-mint hover:text-mint-dim hover:underline">
               Terms &amp; Conditions
             </a>
           </span>
@@ -172,9 +172,9 @@ export const Register = () => {
         Create Account
       </Button>
 
-      <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
+      <p className="text-center text-xs text-secondary mt-2">
         Already have an account?{' '}
-        <Link to="/login" className="font-bold text-primary-650 hover:underline">
+        <Link to="/login" className="font-bold text-mint hover:text-mint-dim hover:underline">
           Sign in
         </Link>
       </p>

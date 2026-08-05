@@ -1,27 +1,113 @@
 @import "tailwindcss";
 
-@theme {
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-900: #1e3a8a;
-
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
+:root {
+  --bg-void: #070C0A;
+  --bg-surface: #0E1712;
+  --bg-surface-2: #141F19;
+  --border-hair: #22322A;
+  --mint: #39FFB0;
+  --mint-dim: #1FB582;
+  --mint-glow: rgba(57, 255, 176, 0.35);
+  --text-primary: #F3FBF7;
+  --text-secondary: #93A99E;
+  --red-soft: #FF6B6B;
+  --amber-soft: #FFC24B;
+  --radius-lg: 20px;
+  --radius-md: 14px;
 }
 
 body {
-  background-color: #f8fafc; /* slate-50 */
-  color: #0f172a; /* slate-900 */
-  font-family: 'Inter', system-ui, sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  background: radial-gradient(circle at 15% 0%, #0C1712 0%, var(--bg-void) 55%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: "Inter", system-ui, sans-serif;
+  min-height: 100vh;
 }
 
-.dark body {
-  background-color: #0f172a; /* slate-900 */
-  color: #f8fafc; /* slate-50 */
+/* Glass / floating card, like Verda's stat cards */
+.card {
+  background: linear-gradient(180deg, var(--bg-surface) 0%, #0A1310 100%);
+  border: 1px solid var(--border-hair);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 40px -20px rgba(0,0,0,0.6);
+  transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
 }
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(57,255,176,0.35);
+  box-shadow: 0 24px 48px -16px rgba(0,0,0,0.7), 0 0 30px -8px var(--mint-glow);
+}
+
+/* Ambient float, applied to hero/stat cards on load */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card--float { animation: floatY 6s ease-in-out infinite; }
+}
+
+/* Mint pill button (the "Get started ->" / "Start Exam" button) */
+.btn-mint {
+  background: var(--mint);
+  color: #06130D;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  box-shadow: 0 0 0 0 var(--mint-glow);
+  transition: box-shadow .3s ease, transform .2s ease;
+}
+.btn-mint:hover {
+  box-shadow: 0 0 24px 4px var(--mint-glow);
+  transform: translateY(-1px);
+}
+
+/* Sidebar active nav item glow, replaces the current solid-blue block */
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(57,255,176,0.15), transparent);
+  border-left: 2px solid var(--mint);
+  color: var(--mint);
+}
+
+/* Pulsing "adaptive ring" behind key numbers (Dashboard stats, Grade, Score) */
+.adaptive-ring {
+  position: relative;
+  display: inline-flex;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .adaptive-ring::before {
+    content: "";
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 1px solid var(--mint-dim);
+    opacity: 0.5;
+    animation: pulseRing 2.4s ease-out infinite;
+  }
+}
+@keyframes pulseRing {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  70% { transform: scale(1.15); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* Sparkline / trend accent under big numbers, mint gradient like Verda's chart cards */
+.trend-fill {
+  stroke: var(--mint);
+  fill: url(#mintFade);
+}
+
+/* Number count-up feel: fade+rise on mount, stagger via nth-child in JSX */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .animate-in { animation: riseIn .6s cubic-bezier(.22,1,.36,1) both; }
+}
+
+/* Topic-performance heat tiles: keep hue-by-score, but on dark surfaces */
+.tile-green   { background: linear-gradient(135deg, #14532D, #0E1712); border: 1px solid #1FB582; }
+.tile-amber   { background: linear-gradient(135deg, #4A3B12, #0E1712); border: 1px solid #FFC24B; }
+.tile-red     { background: linear-gradient(135deg, #4A1414, #0E1712); border: 1px solid #FF6B6B; }

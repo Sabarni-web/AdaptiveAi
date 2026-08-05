@@ -42,8 +42,8 @@ export const Settings = () => {
                 {...register('theme')}
               />
 
-              <div className="flex justify-end border-t border-slate-100 dark:border-slate-700 pt-5 mt-2">
-                <Button type="submit">Save Settings</Button>
+              <div className="flex justify-end border-t border-hair pt-5 mt-2">
+                <Button type="submit" variant="primary">Save Settings</Button>
               </div>
             </div>
           </Card>

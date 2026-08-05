@@ -28,36 +28,36 @@ export const RadarChart = ({ data = [], compareData = [], title = 'Skill Analysi
     <Card title={title} description="Student skill profiling compared against class average.">
       <div className="h-72 w-full mt-4">
         {data.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+          <div className="h-full flex items-center justify-center text-secondary text-sm">
             No skill profile data available.
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <RechartsRadarChart cx="50%" cy="50%" r="80%" data={chartData}>
-              <PolarGrid className="stroke-slate-200 dark:stroke-slate-700" />
-              <PolarAngleAxis dataKey="skill" className="text-[10px] font-bold fill-slate-500" />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} className="text-[10px] fill-slate-400" />
+              <PolarGrid className="stroke-hair" />
+              <PolarAngleAxis dataKey="skill" className="text-[10px] font-bold fill-secondary" />
+              <PolarRadiusAxis angle={30} domain={[0, 100]} className="text-[10px] fill-secondary" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#1e293b',
-                  border: 'none',
+                  backgroundColor: '#0E1712',
+                  border: '1px solid #22322A',
                   borderRadius: '12px',
-                  color: '#fff',
+                  color: '#F3FBF7',
                 }}
               />
               <Radar
                 name="Student Profile"
                 dataKey="student"
-                stroke="#4f46e5"
-                fill="#4f46e5"
-                fillOpacity={0.25}
+                stroke="#39FFB0"
+                fill="#39FFB0"
+                fillOpacity={0.15}
               />
               {compareData.length > 0 && (
                 <Radar
                   name="Class Average"
                   dataKey="average"
-                  stroke="#ef4444"
-                  fill="#ef4444"
+                  stroke="#FF6B6B"
+                  fill="#FF6B6B"
                   fillOpacity={0.1}
                 />
               )}

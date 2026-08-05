@@ -4,6 +4,7 @@ import examService from '../services/examService';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card } from '../components/common/Card';
 import { DataTable } from '../components/common/DataTable';
+import { EmptyState } from '../components/common/EmptyState';
 import { CheckCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,7 +20,7 @@ export const StudentResults = () => {
     {
       header: 'Score',
       accessor: (row) => (
-        <span className="font-semibold text-slate-800 dark:text-slate-200">
+        <span className="font-semibold text-primary">
           {row.score}%
         </span>
       ),
@@ -27,7 +28,7 @@ export const StudentResults = () => {
     {
       header: 'Grade',
       accessor: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-mint/10 text-mint border border-mint/20">
           {row.grade}
         </span>
       ),
@@ -41,7 +42,7 @@ export const StudentResults = () => {
       accessor: (row) => (
         <button
           onClick={() => navigate(`/result/${row.sessionId}`)}
-          className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-semibold transition-colors"
+          className="text-mint hover:text-mint-dim text-sm font-semibold transition-colors"
         >
           View Details
         </button>
@@ -61,7 +62,13 @@ export const StudentResults = () => {
           columns={columns}
           data={history}
           isLoading={isLoading}
-          emptyMessage="You haven't completed any exams yet."
+          emptyState={
+            <EmptyState
+              icon={<CheckCircle className="h-6 w-6" />}
+              title="No records found"
+              description="You haven't completed any exams yet."
+            />
+          }
         />
       </Card>
     </div>

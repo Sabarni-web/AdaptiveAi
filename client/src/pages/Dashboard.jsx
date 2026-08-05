@@ -83,22 +83,22 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Start Exam Card */}
         <Card
-          className="lg:col-span-2 bg-gradient-to-br from-primary-600 to-indigo-650 text-white border-0 flex flex-col justify-between gap-6 !p-8"
+          className="card card--float lg:col-span-2 flex flex-col justify-between gap-6 !p-8"
         >
           <div className="flex flex-col gap-2">
-            <span className="bg-primary-500/30 text-primary-200 border border-primary-400/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider w-fit">
+            <span className="bg-mint/10 text-mint border border-mint/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider w-fit">
               Assigned Evaluation
             </span>
             <h2 className="text-xl md:text-2xl font-black leading-tight mt-1">
               Full Stack Engineering Evaluation
             </h2>
-            <p className="text-sm text-primary-100 max-w-md font-medium">
+            <p className="text-sm text-secondary max-w-md font-medium">
               Take the computer science adaptive evaluation test containing algorithmic and system design questions.
             </p>
           </div>
 
           <div className="flex items-center justify-between mt-4">
-            <div className="flex gap-4 text-xs font-semibold text-primary-200">
+            <div className="flex gap-4 text-xs font-semibold text-secondary">
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" /> 30 Minutes
               </span>
@@ -108,8 +108,8 @@ export const Dashboard = () => {
             </div>
             <Button
               onClick={handleStartExam}
-              className="flex items-center gap-2 border-0 font-bold"
-              style={{ backgroundColor: '#3b82f6', color: 'black' }}
+              variant="primary"
+              className="flex items-center gap-2"
             >
               <Play className="h-4 w-4 fill-current" />
               <span>Start Exam</span>
@@ -120,16 +120,16 @@ export const Dashboard = () => {
         {/* Quick Stats Widget */}
         <Card title="Quick Stats" description="Your aggregate progress.">
           <div className="flex flex-col gap-4 mt-2">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Exams Completed</span>
-              <span className="text-lg font-black text-slate-800 dark:text-white">{history.length}</span>
+            <div className="flex items-center justify-between pb-3 border-b border-hair">
+              <span className="text-sm font-bold text-primary">Exams Completed</span>
+              <span className="adaptive-ring"><span className="text-lg font-black text-primary relative z-10">{history.length}</span></span>
             </div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Average Grade</span>
-              <span className="text-lg font-black text-slate-800 dark:text-white">{getAverageGrade()}</span>
+            <div className="flex items-center justify-between pb-3 border-b border-hair">
+              <span className="text-sm font-bold text-primary">Average Grade</span>
+              <span className="adaptive-ring"><span className="text-lg font-black text-primary relative z-10">{getAverageGrade()}</span></span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">System Standing</span>
+              <span className="text-sm font-bold text-primary">System Standing</span>
               <span className="text-sm font-bold text-green-500">Active</span>
             </div>
           </div>
