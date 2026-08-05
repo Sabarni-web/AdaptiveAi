@@ -138,3 +138,7 @@ body.light .btn-mint:hover {
 .tile-green   { background: linear-gradient(135deg, #14532D, #0E1712); border: 1px solid #1FB582; }
 .tile-amber   { background: linear-gradient(135deg, #4A3B12, #0E1712); border: 1px solid #FFC24B; }
 .tile-red     { background: linear-gradient(135deg, #4A1414, #0E1712); border: 1px solid #FF6B6B; }
+
+body.light .tile-green   { background: linear-gradient(135deg, #d1fae5, #ecfdf5); border: 1px solid #34d399; }
+body.light .tile-amber   { background: linear-gradient(135deg, #fef3c7, #fffbeb); border: 1px solid #fbbf24; }
+body.light .tile-red     { background: linear-gradient(135deg, #fee2e2, #fef2f2); border: 1px solid #f87171; }
