@@ -60,9 +60,9 @@ export const DataTable = ({
                   />
                 </th>
               )}
-              {columns.map((col) => (
+              {columns.map((col, idx) => (
                 <th
-                  key={col.key}
+                  key={col.key || col.header || idx}
                   style={{ width: col.width }}
                   className={`px-6 py-4 cursor-pointer transition-colors ${theme === 'light' ? 'hover:bg-slate-100' : 'hover:bg-slate-800'}`}
                   onClick={() => {
@@ -118,9 +118,9 @@ export const DataTable = ({
                         />
                       </td>
                     )}
-                    {columns.map((col) => (
-                      <td key={col.key} className="px-6 py-3.5">
-                        {col.render ? col.render(row[col.key], row) : row[col.key]}
+                    {columns.map((col, cIdx) => (
+                      <td key={col.key || col.header || cIdx} className="px-6 py-3.5">
+                        {col.render ? col.render(row[col.key] || row, row) : (typeof col.accessor === 'function' ? col.accessor(row) : row[col.key || col.accessor])}
                       </td>
                     ))}
                     {rowActions.length > 0 && (

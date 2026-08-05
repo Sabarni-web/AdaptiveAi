@@ -9,6 +9,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   logger.error(`[${requestId}] Error: ${err.message}`, { stack: err.stack, path: req.path });
 
   if (err instanceof ZodError) {
+    logger.error(`Validation Error: ${JSON.stringify(err.issues)} - Body: ${JSON.stringify(req.body)}`);
     res.status(400).json({
       success: false,
       error: {

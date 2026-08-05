@@ -36,7 +36,11 @@ export const Result = () => {
   };
 
   const handleDownloadCert = () => {
-    setShowCert(true);
+    if (result.certificateId) {
+      window.open(`http://localhost:5000/api/v1/certificates/download/${result.certificateId}`, '_blank');
+    } else {
+      toast.error('Certificate not available for this exam yet.');
+    }
   };
 
   const handleDownloadPDF = () => {
@@ -80,7 +84,7 @@ export const Result = () => {
         examTitle={result.examTitle}
         completedAt={result.completedAt}
         onShare={handleShare}
-        onDownload={handleDownloadPDF}
+        onDownload={handleDownloadCert}
       />
 
       {/* Grid layouts for breakdowns and charts */}

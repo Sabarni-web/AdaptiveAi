@@ -12,7 +12,7 @@ export class AIService {
       logger.error('GEMINI_API_KEY is not defined in environment variables');
     }
     this.genAI = new GoogleGenerativeAI(apiKey || '');
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }
 
   async generateQuestions(subject: string, difficulty: string, count: number): Promise<any[]> {
