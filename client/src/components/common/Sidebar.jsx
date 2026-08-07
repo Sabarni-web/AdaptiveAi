@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Award,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { toggleSidebarCollapse } from '../../redux/slices/uiSlice';
@@ -36,6 +37,7 @@ export const Sidebar = () => {
           { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
           { label: 'My Exams', path: '/student/exams', icon: <GraduationCap className="h-5 w-5" /> },
           { label: 'Results', path: '/student/results', icon: <CheckSquare className="h-5 w-5" /> },
+          { label: 'Certificates', path: '/student/certificates', icon: <Award className="h-5 w-5" /> },
           { label: 'Analytics', path: '/analytics', icon: <TrendingUp className="h-5 w-5" /> },
           { label: 'Settings', path: '/settings', icon: <SettingsIcon className="h-5 w-5" /> },
         ];
@@ -54,6 +56,7 @@ export const Sidebar = () => {
           { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
           { label: 'Question Generator', path: '/admin/generator', icon: <Database className="h-5 w-5" /> },
           { label: 'User Management', path: '/admin/users', icon: <Users className="h-5 w-5" /> },
+          { label: 'Certificates', path: '/admin/certificates', icon: <Award className="h-5 w-5" /> },
           { label: 'Subjects', path: '/admin/subjects', icon: <BookOpen className="h-5 w-5" /> },
           { label: 'System Analytics', path: '/admin/analytics', icon: <ShieldCheck className="h-5 w-5" /> },
           { label: 'Audit Logs', path: '/admin/audit-logs', icon: <History className="h-5 w-5" /> },

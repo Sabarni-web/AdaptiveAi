@@ -16,7 +16,7 @@ class EmailService {
     });
   }
 
-  async sendEmail(to: string, subject: string, text: string, html?: string): Promise<void> {
+  async sendEmail(to: string, subject: string, text: string, html?: string, attachments?: nodemailer.SendMailOptions['attachments']): Promise<void> {
     try {
       await this.transporter.sendMail({
         from: '"AdaptiveAI" <noreply@adaptiveai.com>',
@@ -24,6 +24,7 @@ class EmailService {
         subject,
         text,
         html,
+        attachments,
       });
       logger.info(`Email sent to ${to}`);
     } catch (error) {

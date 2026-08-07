@@ -19,12 +19,13 @@ export const Timer = ({
   } = useTimer(totalSeconds, warningAt, onTimeUp);
 
   useEffect(() => {
-    if (isRunning) {
-      start();
-    } else {
+    if (!isRunning || timeRemaining <= 0) {
       pause();
+      return;
     }
-  }, [isRunning, start, pause]);
+    
+    start();
+  }, [isRunning, timeRemaining, start, pause]);
 
   // Sync remaining seconds if parent overrides
   useEffect(() => {

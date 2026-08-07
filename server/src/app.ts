@@ -13,6 +13,7 @@ import resultRoutes from './routes/result.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import teacherRoutes from './routes/teacher.routes';
 import adminRoutes from './routes/admin.routes';
+import certificateRoutes from './routes/certificate.routes';
 import { setupSwagger } from './config/swagger';
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/v1/results', resultRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/certificates', certificateRoutes);
 
 app.use(errorHandler);
 

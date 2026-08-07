@@ -29,7 +29,9 @@ import { QuestionGenerator } from './pages/admin/QuestionGenerator';
 import { StudentExams } from './pages/StudentExams';
 import { StudentResults } from './pages/StudentResults';
 import { NotFound } from './pages/NotFound';
-
+import { CertificateDashboard } from './pages/admin/CertificateDashboard';
+import { StudentCertificates } from './pages/StudentCertificates';
+import { VerifyCertificate } from './pages/VerifyCertificate';
 // Protected Route Guard
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -145,6 +147,17 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/student/certificates" element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <StudentCertificates />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/admin/certificates" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <CertificateDashboard />
+          </ProtectedRoute>
+        } />
         <Route path="/admin/subjects" element={<Navigate to="/dashboard" />} />
         <Route path="/admin/analytics" element={<Navigate to="/dashboard" />} />
         <Route path="/admin/audit-logs" element={<Navigate to="/dashboard" />} />
@@ -157,6 +170,7 @@ export const App = () => {
 
       {/* Fallback routes */}
       <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Route path="/verify/:certificateId?" element={<VerifyCertificate />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

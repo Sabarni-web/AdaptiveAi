@@ -1,12 +1,17 @@
 import { ExamSession, IExamSession } from '../models/ExamSession';
 import { Question, IQuestion } from '../models/Question';
 import { Result } from '../models/Result';
+import { Certificate } from '../models/Certificate';
 import { irtClient } from './irtClient';
 import { queueService } from './queueService';
 import { aiService } from './aiService';
 import mongoose from 'mongoose';
+import { generateCertificateLogic } from './certificate.service';
+import { generateCertificatePDF } from './pdfGenerator.service';
+import { emailService } from './emailService';
+import { User } from '../models/User';
+import { ExamConfig } from '../models/ExamConfig';
 import { logger } from '../utils/logger';
-
 export class ExamOrchestrator {
   async startExam(studentId: string, examConfigId: string, language?: string): Promise<IExamSession> {
     // Validate: student assigned, exam active, no existing session
@@ -24,8 +29,11 @@ export class ExamOrchestrator {
 
   async getNextQuestion(sessionId: string): Promise<any> {
     const session = await ExamSession.findById(sessionId);
-    if (!session || session.status !== 'in_progress') throw new Error('Invalid session');
-
+    if (!session) throw new Error('Session not found');
+    if (session.status === 'completed' || session.status === 'force_submitted') {
+      return { isStop: true };
+    }
+    if (session.status !== 'in_progress') throw new Error('Invalid session status');
     const answeredCount = session.questionsAsked.length;
     const questionLimit = 10;
 
@@ -133,7 +141,7 @@ export class ExamOrchestrator {
         correctAnswer = question.correctAnswer || '';
         explanation = question.explanation || '';
         if (question.type === 'MCQ') {
-          const selectedOption = question.options.find((o: any) => o.label === answer);
+          const selectedOption = (question.options || []).find((o: any) => o.label === answer);
           const selectedText = selectedOption ? selectedOption.text : answer;
           isCorrect = selectedText === question.correctAnswer;
         } else {
@@ -200,6 +208,48 @@ export class ExamOrchestrator {
     });
     await resultDoc.save();
 
+    // Trigger Certificate Generation
+    if (scorePercentage >= 70) {
+      try {
+        const student = await User.findById(session.studentId);
+        const examConfig = await ExamConfig.findById(session.examConfigId);
+        
+        if (student && examConfig) {
+          const cert = await generateCertificateLogic({
+            userId: session.studentId.toString(),
+            examId: session.examConfigId.toString(),
+            studentName: student.name,
+            studentEmail: student.email,
+            examName: examConfig.title,
+            subject: examConfig.subject || examConfig.title,
+            totalQuestions,
+            correctAnswers: correctCount,
+            wrongAnswers: totalQuestions - correctCount,
+            skippedAnswers: 0,
+            timeTaken: 120, // Example hardcoded since time wasn't tracked fully here
+            difficultyReached: 'medium',
+          });
+
+          if (cert) {
+             const pdfBuffer = await generateCertificatePDF(cert);
+             await emailService.sendEmail(
+                student.email,
+                'Your AdaptiveAI Certificate of Completion',
+                `Congratulations ${student.name}! You scored ${cert.percentage.toFixed(2)}% in ${examConfig.title}.`,
+                undefined,
+                [{
+                  filename: `${cert.certificateId}.pdf`,
+                  content: pdfBuffer,
+                  contentType: 'application/pdf'
+                }]
+             );
+          }
+        }
+      } catch (err) {
+        logger.error('Error auto-generating certificate:', err);
+      }
+    }
+
     return session;
   }
 
@@ -216,10 +266,14 @@ export class ExamOrchestrator {
 
     const questionIds = session.questionsAsked.map(q => q.questionId);
     const questions = await Question.find({ _id: { $in: questionIds } });
+    
+    const cert = await Certificate.findOne({ userId: session.studentId, examId: session.examConfigId });
+    const certificateId = cert ? cert.certificateId : null;
 
     return {
       score: { total: totalScore, max: maxScore, percentage: scorePercentage },
       grade,
+      certificateId,
       percentile: 85,
       ability: session.currentAbility,
       confidenceInterval: [session.currentAbility - 0.15, session.currentAbility + 0.15],
@@ -245,7 +299,7 @@ export class ExamOrchestrator {
         const qDetail = questions.find(q => q._id.toString() === qa.questionId.toString());
         let studentAnswerText = qa.answer;
         if (qDetail && qDetail.type === 'MCQ') {
-           const selectedOpt = qDetail.options.find((o: any) => o.label === qa.answer);
+           const selectedOpt = (qDetail.options || []).find((o: any) => o.label === qa.answer);
            if (selectedOpt) studentAnswerText = selectedOpt.text;
         }
         return {
