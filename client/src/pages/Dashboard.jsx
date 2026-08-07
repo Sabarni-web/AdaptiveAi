@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const { startExam } = useExam();
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
 
   const role = user?.role || 'student';
 
@@ -35,7 +36,7 @@ export const Dashboard = () => {
 
   const handleStartExam = () => {
     // Starts the seeded Full Stack evaluation config
-    startExam('65f1a2b3c4d5e6f7a8b9c0d1');
+    startExam('65f1a2b3c4d5e6f7a8b9c0d1', selectedLanguage);
   };
 
   const getAverageGrade = () => {
@@ -106,14 +107,25 @@ export const Dashboard = () => {
                 <BookOpen className="h-4 w-4" /> Adaptive limit
               </span>
             </div>
-            <Button
-              onClick={handleStartExam}
-              variant="primary"
-              className="flex items-center gap-2"
-            >
-              <Play className="h-4 w-4 fill-current" />
-              <span>Start Exam</span>
-            </Button>
+            <div className="flex items-center gap-3">
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="bg-transparent border border-hair rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mint"
+              >
+                <option value="en">English</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="bn">বাংলা (Bengali)</option>
+              </select>
+              <Button
+                onClick={handleStartExam}
+                variant="primary"
+                className="flex items-center gap-2"
+              >
+                <Play className="h-4 w-4 fill-current" />
+                <span>Start Exam</span>
+              </Button>
+            </div>
           </div>
         </Card>
 

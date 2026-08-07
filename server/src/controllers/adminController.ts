@@ -65,6 +65,32 @@ export class AdminController {
       next(error);
     }
   }
+
+  async updateQuestionTranslations(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { translations } = req.body;
+      
+      const question = await Question.findById(id);
+      if (!question) {
+        res.status(404).json({ success: false, message: 'Question not found' });
+        return;
+      }
+
+      if (!question.translations) {
+        question.translations = new Map();
+      }
+
+      for (const [lang, translation] of Object.entries(translations)) {
+        question.translations.set(lang, translation as any);
+      }
+      
+      await question.save();
+      res.status(200).json({ success: true, data: question });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const adminController = new AdminController();

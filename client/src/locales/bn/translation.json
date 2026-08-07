@@ -1,0 +1,18 @@
+{
+  "startExam": "পরীক্ষা শুরু করুন",
+  "selectLanguage": "পরীক্ষার ভাষা নির্বাচন করুন",
+  "language_en": "English",
+  "language_hi": "हिन्दी (Hindi)",
+  "language_bn": "বাংলা (Bengali)",
+  "nextQuestion": "পরবর্তী প্রশ্ন",
+  "submitExam": "পরীক্ষা জমা দিন",
+  "timer": "বাকি সময়",
+  "question": "প্রশ্ন",
+  "of": "এর",
+  "confirmSubmit": "আপনি কি নিশ্চিত যে আপনি পরীক্ষা জমা দিতে চান?",
+  "yesSubmit": "হ্যাঁ, জমা দিন",
+  "cancel": "বাতিল করুন",
+  "calculatingResult": "আপনার ফলাফল গণনা করা হচ্ছে...",
+  "examComplete": "পরীক্ষা সম্পন্ন",
+  "viewResults": "ফলাফল দেখুন"
+}

@@ -22,6 +22,13 @@ export interface IQuestion extends Document {
     weight: number;
     maxMarks: number;
   }>;
+  translations?: {
+    [key: string]: {
+      question: string;
+      options?: Array<{ label: string; text: string }>;
+      explanation?: string;
+    };
+  };
   createdBy?: mongoose.Types.ObjectId;
   generatedBy?: 'Human' | 'AI';
   verified?: boolean;
@@ -61,6 +68,14 @@ const QuestionSchema = new Schema<IQuestion>(
     isActive: { type: Boolean, default: true },
     version: { type: Number, default: 1 },
     usageCount: { type: Number, default: 0 },
+    translations: {
+      type: Map,
+      of: new Schema({
+        question: { type: String, required: true },
+        options: [{ label: String, text: String }],
+        explanation: { type: String }
+      }, { _id: false })
+    },
   },
   { timestamps: true }
 );

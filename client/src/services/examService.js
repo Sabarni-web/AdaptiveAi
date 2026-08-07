@@ -12,6 +12,26 @@ const MOCK_QUESTIONS = [
       { label: 'C', text: 'O(n)' },
       { label: 'D', text: 'O(n log n)' },
     ],
+    translations: {
+      hi: {
+        text: '<p>संतुलित बाइनरी सर्च ट्री (BST) में खोजने की समय जटिलता (time complexity) क्या है?</p>',
+        options: [
+          { label: 'A', text: 'O(1)' },
+          { label: 'B', text: 'O(log n)' },
+          { label: 'C', text: 'O(n)' },
+          { label: 'D', text: 'O(n log n)' },
+        ]
+      },
+      bn: {
+        text: '<p>একটি ব্যালান্সড বাইনারি সার্চ ট্রি (BST)-তে খোঁজার সময় জটিলতা (time complexity) কত?</p>',
+        options: [
+          { label: 'A', text: 'O(1)' },
+          { label: 'B', text: 'O(log n)' },
+          { label: 'C', text: 'O(n)' },
+          { label: 'D', text: 'O(n log n)' },
+        ]
+      }
+    },
     correctOption: 'B',
     difficulty: 0.5,
     marks: 2,
@@ -79,12 +99,13 @@ let sessionState = {
   history: [],
   answers: {},
   isFinished: false,
+  language: 'en',
 };
 
 const examService = {
-  startExam: async (examConfigId) => {
+  startExam: async (examConfigId, language = 'en') => {
     try {
-      const response = await apiClient.post('/exams/start', { examConfigId });
+      const response = await apiClient.post('/exams/start', { examConfigId, language });
       return response.data.data;
     } catch (error) {
       if (import.meta.env.DEV && !error.response) {
@@ -96,6 +117,7 @@ const examService = {
           history: [],
           answers: {},
           isFinished: false,
+          language: language,
         };
         return {
           sessionId: sessionState.sessionId,
@@ -123,12 +145,21 @@ const examService = {
         }
         const mockIndex = sessionState.currentQuestionIndex % MOCK_QUESTIONS.length;
         const question = MOCK_QUESTIONS[mockIndex];
+        let displayQuestionText = question.text;
+        let displayOptions = question.options;
+
+        if (sessionState.language !== 'en' && question.translations && question.translations[sessionState.language]) {
+          const translation = question.translations[sessionState.language];
+          displayQuestionText = translation.text || displayQuestionText;
+          displayOptions = translation.options || displayOptions;
+        }
+
         return {
           question: {
             id: question.id + '-' + sessionState.currentQuestionIndex,
             type: question.type,
-            text: question.text,
-            options: question.options,
+            text: displayQuestionText,
+            options: displayOptions,
             marks: question.marks,
             questionNumber: sessionState.currentQuestionIndex + 1,
             totalQuestions: 10,

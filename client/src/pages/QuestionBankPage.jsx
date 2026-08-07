@@ -90,6 +90,17 @@ export const QuestionBankPage = () => {
     { key: 'type', header: 'Type' },
     { key: 'difficulty', header: 'Difficulty (&theta;)', render: (val) => val.toFixed(2) },
     { key: 'marks', header: 'Marks' },
+    {
+      key: 'translations',
+      header: 'Translations',
+      render: (_, row) => {
+        const langs = ['en'];
+        if (row.translations) {
+          langs.push(...Object.keys(row.translations));
+        }
+        return langs.join(', ');
+      },
+    }
   ];
 
   const rowActions = [

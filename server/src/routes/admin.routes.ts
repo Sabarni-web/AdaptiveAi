@@ -13,5 +13,6 @@ router.get('/system-health', adminController.getSystemHealth);
 router.post('/generate-questions', adminController.generateQuestions);
 router.get('/questions', adminController.getQuestions);
 router.delete('/questions/:id', adminController.deleteQuestion);
+router.put('/questions/:id/translations', adminController.updateQuestionTranslations);
 
 export default router;

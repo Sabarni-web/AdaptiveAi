@@ -32,10 +32,10 @@ export const useExam = () => {
     error,
   } = useSelector((state) => state.exam);
 
-  const startExam = async (examConfigId) => {
+  const startExam = async (examConfigId, language = 'en') => {
     dispatch(initExamStart());
     try {
-      const data = await examService.startExam(examConfigId);
+      const data = await examService.startExam(examConfigId, language);
       dispatch(initExamSuccess(data));
       navigate(`/exam/${data.sessionId}`);
     } catch (err) {
@@ -58,7 +58,9 @@ export const useExam = () => {
         }));
       }
     } catch (err) {
-      toast.error('Failed to load next question.');
+      const errMsg = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Failed to load next question.';
+      const errStage = err.response?.data?.error?.stage ? ` [Stage: ${err.response.data.error.stage}]` : '';
+      toast.error(`Failed to load next question: ${errMsg}${errStage}`);
     }
   };
 
@@ -74,7 +76,8 @@ export const useExam = () => {
       dispatch(updateAbilityState({ ability: response.ability }));
       return response;
     } catch (err) {
-      toast.error('Failed to submit answer.');
+      const errMsg = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Failed to submit answer.';
+      toast.error(errMsg);
       return null;
     }
   };

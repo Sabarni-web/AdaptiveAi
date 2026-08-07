@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const startExamSchema = z.object({
   examConfigId: z.string().min(24, 'Invalid Config ID'),
+  language: z.string().optional(),
 });
 
 export const answerSchema = z.object({
