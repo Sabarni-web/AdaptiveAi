@@ -40,6 +40,23 @@ class SocketService {
     this.socket?.emit('focus_change', { sessionId, isFocused, timestamp: new Date().toISOString() });
   }
 
+  // Proctoring Emitters
+  emitFaceDetected(sessionId, confidence) {
+    this.socket?.emit('faceDetected', { sessionId, confidence, timestamp: new Date().toISOString() });
+  }
+
+  emitFaceLost(sessionId) {
+    this.socket?.emit('faceLost', { sessionId, timestamp: new Date().toISOString() });
+  }
+
+  emitWarningIssued(sessionId) {
+    this.socket?.emit('warningIssued', { sessionId, timestamp: new Date().toISOString() });
+  }
+
+  emitViolationLogged(sessionId, duration) {
+    this.socket?.emit('violationLogged', { sessionId, duration, timestamp: new Date().toISOString() });
+  }
+
   // Event Listeners
   onTimeWarning(callback) {
     this.socket?.on('time_warning', callback);
