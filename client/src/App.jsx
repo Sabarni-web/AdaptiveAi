@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import './i18n';
 
 // Layouts
 import { AuthLayout } from './layouts/AuthLayout';

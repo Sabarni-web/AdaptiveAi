@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IExamSession extends Document {
   studentId: mongoose.Types.ObjectId;
   examConfigId: mongoose.Types.ObjectId;
+  language?: string;
   status: 'in_progress' | 'completed' | 'abandoned' | 'timed_out' | 'force_submitted';
   currentAbility: number;
   abilityHistory: Array<{
@@ -44,6 +45,7 @@ const ExamSessionSchema = new Schema<IExamSession>(
   {
     studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     examConfigId: { type: Schema.Types.ObjectId, ref: 'ExamConfig', required: true },
+    language: { type: String, default: 'en' },
     status: { type: String, enum: ['in_progress', 'completed', 'abandoned', 'timed_out', 'force_submitted'], required: true },
     currentAbility: { type: Number, default: 0 },
     abilityHistory: [{

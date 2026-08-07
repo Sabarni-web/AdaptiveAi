@@ -60,6 +60,20 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     });
     return;
   }
+  if (err.isAIError) {
+    res.status(502).json({
+      success: false,
+      error: {
+        code: 'AI_GENERATION_FAILED',
+        stage: err.stage,
+        attempt: err.attempt,
+        message: err.reason || 'Failed to generate questions',
+        timestamp: new Date().toISOString(),
+        requestId
+      }
+    });
+    return;
+  }
 
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({

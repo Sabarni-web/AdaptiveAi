@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const SubmitConfirmation = ({
   isOpen,
@@ -11,6 +12,7 @@ export const SubmitConfirmation = ({
   totalCount = 10,
   flaggedCount = 0,
 }) => {
+  const { t } = useTranslation();
   const [confirmText, setConfirmText] = useState('');
   const unattemptedCount = totalCount - answeredCount;
 
@@ -24,12 +26,12 @@ export const SubmitConfirmation = ({
     <Modal
       isOpen={isOpen}
       onClose={onCancel}
-      title="Submit Evaluation Session"
-      description="Please review your answers before submitting."
+      title={t('submitExam', 'Submit Evaluation Session')}
+      description={t('confirmSubmit', 'Please review your answers before submitting.')}
       footer={
         <div className="flex gap-3">
           <Button variant="outline" onClick={onCancel}>
-            Cancel and Return
+            {t('cancel', 'Cancel and Return')}
           </Button>
           <Button
             variant="danger"

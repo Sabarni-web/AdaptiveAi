@@ -5,13 +5,15 @@ import { irtClient } from './irtClient';
 import { queueService } from './queueService';
 import { aiService } from './aiService';
 import mongoose from 'mongoose';
+import { logger } from '../utils/logger';
 
 export class ExamOrchestrator {
-  async startExam(studentId: string, examConfigId: string): Promise<IExamSession> {
+  async startExam(studentId: string, examConfigId: string, language?: string): Promise<IExamSession> {
     // Validate: student assigned, exam active, no existing session
     const session = new ExamSession({
       studentId,
       examConfigId,
+      language: language || 'en',
       status: 'in_progress',
       startedAt: new Date(),
     });
@@ -45,12 +47,22 @@ export class ExamOrchestrator {
 
     if (!question) {
       // Not enough questions in MongoDB -> Call Gemini
-      const newQuestions = await aiService.generateQuestions('Full Stack Engineering', targetDifficulty, 1);
-      if (newQuestions && newQuestions.length > 0) {
-        const savedQuestions = await Question.insertMany(newQuestions);
-        question = savedQuestions[0] as any;
-      } else {
-        return { isStop: true };
+      try {
+        const newQuestions = await aiService.generateQuestions('Full Stack Engineering', targetDifficulty, 1);
+        if (newQuestions && newQuestions.length > 0) {
+          const savedQuestions = await Question.insertMany(newQuestions);
+          question = savedQuestions[0] as any;
+        }
+      } catch (aiError: any) {
+        logger.error(`[ORCHESTRATOR] AI Generation failed: ${JSON.stringify(aiError)}`);
+        // Fallback: try to find ANY question in the DB that hasn't been asked, regardless of difficulty
+        logger.info(`[ORCHESTRATOR] Attempting to find a fallback cached question...`);
+        question = await Question.findOne({ _id: { $nin: askedIds } });
+        
+        if (!question) {
+          // If we still don't have a question, we either stop the exam or throw the structured error so the frontend knows WHY it failed.
+          throw aiError; 
+        }
       }
     }
 
@@ -66,12 +78,31 @@ export class ExamOrchestrator {
     });
     await session.save();
 
+    // Handle translation based on session language
+    const lang = session.language || 'en';
+    let displayQuestionText = question.question;
+    let displayOptions = question.options;
+
+    if (lang !== 'en' && question.translations) {
+      let translation;
+      if (typeof question.translations.get === 'function') {
+        translation = question.translations.get(lang);
+      } else {
+        translation = question.translations[lang];
+      }
+      
+      if (translation) {
+        displayQuestionText = translation.question || displayQuestionText;
+        displayOptions = translation.options || displayOptions;
+      }
+    }
+
     return {
       question: {
         id: question._id.toString(),
         type: question.type,
-        text: question.question,
-        options: question.options,
+        text: displayQuestionText,
+        options: displayOptions,
         marks: question.marks,
         difficulty: question.difficulty,
         questionNumber: answeredCount + 1,

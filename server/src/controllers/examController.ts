@@ -6,8 +6,8 @@ export class ExamController {
   async startExam(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const studentId = (req as any).user.userId;
-      const { examConfigId } = req.body;
-      const session = await examOrchestrator.startExam(studentId, examConfigId);
+      const { examConfigId, language } = req.body;
+      const session = await examOrchestrator.startExam(studentId, examConfigId, language);
       res.status(200).json({ 
         success: true, 
         data: {

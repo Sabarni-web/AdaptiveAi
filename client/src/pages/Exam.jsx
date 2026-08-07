@@ -12,10 +12,12 @@ import { AutoSaveIndicator } from '../components/exam/AutoSaveIndicator';
 import { BreakScreen } from '../components/exam/BreakScreen';
 import { Button } from '../components/common/Button';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export const Exam = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const {
     currentQuestion,
@@ -144,7 +146,7 @@ export const Exam = () => {
             isRunning={!isPaused && !feedback}
           />
           <Button variant="danger" size="sm" onClick={() => setShowExitModal(true)}>
-            Exit Exam
+            {t('cancel', 'Exit Exam')}
           </Button>
         </div>
       </div>
@@ -191,10 +193,10 @@ export const Exam = () => {
               onClick={handleNext}
               disabled={saveStatus === 'saving' || !!feedback}
             >
-              Submit &amp; Next &rarr;
+              {t('nextQuestion', 'Submit & Next →')}
             </Button>
             <Button variant="danger" onClick={() => setShowSubmitModal(true)}>
-              Submit Exam
+              {t('submitExam', 'Submit Exam')}
             </Button>
           </div>
         </div>
