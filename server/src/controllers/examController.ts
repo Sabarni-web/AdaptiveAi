@@ -6,17 +6,18 @@ export class ExamController {
   async startExam(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const studentId = (req as any).user.userId;
-      const { examConfigId, language } = req.body;
-      const session = await examOrchestrator.startExam(studentId, examConfigId, language);
+      const { domain, subject, questionType, numberOfQuestions, language } = req.body;
+      const payload = { domain, subject, questionType, numberOfQuestions, language };
+      const session = await examOrchestrator.startExam(studentId, payload);
       res.status(200).json({ 
         success: true, 
         data: {
           ...session.toObject(),
           sessionId: session._id,
           config: {
-            title: 'Full Stack Engineering Evaluation',
-            durationSeconds: 1800,
-            questionLimit: 10
+            title: `${subject} Exam`,
+            durationSeconds: numberOfQuestions * 120, // 2 mins per question
+            questionLimit: numberOfQuestions
           }
         } 
       });

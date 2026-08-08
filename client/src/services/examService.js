@@ -103,9 +103,9 @@ let sessionState = {
 };
 
 const examService = {
-  startExam: async (examConfigId, language = 'en') => {
+  startExam: async (payload, language = 'en') => {
     try {
-      const response = await apiClient.post('/exams/start', { examConfigId, language });
+      const response = await apiClient.post('/exams/start', { ...payload, language });
       return response.data.data;
     } catch (error) {
       if (import.meta.env.DEV && !error.response) {

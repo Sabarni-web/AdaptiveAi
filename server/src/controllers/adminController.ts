@@ -77,13 +77,7 @@ export class AdminController {
         return;
       }
 
-      if (!question.translations) {
-        question.translations = new Map();
-      }
-
-      for (const [lang, translation] of Object.entries(translations)) {
-        question.translations.set(lang, translation as any);
-      }
+      question.set('translations', translations);
       
       await question.save();
       res.status(200).json({ success: true, data: question });

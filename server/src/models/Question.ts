@@ -1,89 +1,53 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IQuestion extends Document {
+  domain: string;
   subject: string;
-  chapter: string;
-  topic?: string;
-  question: string;
-  type: 'MCQ' | 'DESCRIPTIVE';
-  difficulty: number | string; // Updated to string 'easy', 'medium', 'hard' or number
-  discrimination: number;
-  guessing: number;
-  bloomLevel: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
-  tags: string[];
-  marks: number;
-  options?: Array<{ label: string; text: string }>;
-  correctAnswer?: string;
-  modelAnswer?: string;
-  explanation?: string;
-  rubric?: Array<{
-    criteria: string;
-    description: string;
-    weight: number;
-    maxMarks: number;
+  questionType: string;
+  questionText: string;
+  options: Array<{
+    key: string;
+    text: string;
   }>;
-  translations?: {
-    [key: string]: {
-      question: string;
-      options?: Array<{ label: string; text: string }>;
-      explanation?: string;
-    };
-  };
-  createdBy?: mongoose.Types.ObjectId;
-  generatedBy?: 'Human' | 'AI';
-  verified?: boolean;
+  correctAnswer?: string;
+  answerExplanation?: string;
+  difficulty: string;
+  topic?: string;
+  sourceDocument?: string;
+  sourceQuestionNumber?: string;
   isActive: boolean;
-  version: number;
-  usageCount: number;
+  translations?: Map<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const QuestionSchema = new Schema<IQuestion>(
   {
-    subject: { type: String, required: true },
-    chapter: { type: String, required: true },
-    topic: { type: String },
-    question: { type: String, required: true },
-    type: { type: String, enum: ['MCQ', 'DESCRIPTIVE'], required: true },
-    difficulty: { type: Schema.Types.Mixed, required: true },
-    discrimination: { type: Number, default: 1 },
-    guessing: { type: Number, default: 0 },
-    bloomLevel: { type: String, enum: ['remember', 'understand', 'apply', 'analyze', 'evaluate', 'create'], default: 'apply' },
-    tags: [{ type: String }],
-    marks: { type: Number, required: true },
-    options: [{ label: String, text: String }],
-    correctAnswer: { type: String },
-    modelAnswer: { type: String },
-    explanation: { type: String },
-    rubric: [{
-      criteria: String,
-      description: String,
-      weight: Number,
-      maxMarks: Number,
-    }],
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
-    generatedBy: { type: String, enum: ['Human', 'AI'], default: 'Human' },
-    verified: { type: Boolean, default: false },
-    isActive: { type: Boolean, default: true },
-    version: { type: Number, default: 1 },
-    usageCount: { type: Number, default: 0 },
-    translations: {
-      type: Map,
-      of: new Schema({
-        question: { type: String, required: true },
-        options: [{ label: String, text: String }],
-        explanation: { type: String }
-      }, { _id: false })
+    domain: { 
+      type: String, 
+      required: true,
     },
+    subject: { type: String, required: true },
+    questionType: { type: String, required: true, enum: ['MCQ', 'SAQ'] },
+    questionText: { type: String, required: true },
+    options: [{
+      key: String,
+      text: String
+    }],
+    correctAnswer: { type: String },
+    answerExplanation: { type: String },
+    difficulty: { type: String, default: 'Medium' },
+    topic: { type: String },
+    sourceDocument: { type: String },
+    sourceQuestionNumber: { type: String },
+    isActive: { type: Boolean, default: true },
+    translations: { type: Map, of: Object },
   },
   { timestamps: true }
 );
 
-QuestionSchema.index({ subject: 1, chapter: 1 });
-QuestionSchema.index({ type: 1, difficulty: 1 });
-QuestionSchema.index({ tags: 1 });
+QuestionSchema.index({ domain: 1, subject: 1, questionType: 1 });
+QuestionSchema.index({ difficulty: 1 });
 QuestionSchema.index({ isActive: 1 });
 
 export const Question = mongoose.model<IQuestion>('Question', QuestionSchema);
-

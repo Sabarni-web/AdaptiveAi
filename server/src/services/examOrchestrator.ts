@@ -12,12 +12,30 @@ import { emailService } from './emailService';
 import { User } from '../models/User';
 import { ExamConfig } from '../models/ExamConfig';
 import { logger } from '../utils/logger';
+
 export class ExamOrchestrator {
-  async startExam(studentId: string, examConfigId: string, language?: string): Promise<IExamSession> {
-    // Validate: student assigned, exam active, no existing session
+  async startExam(studentId: string, payload: any): Promise<IExamSession> {
+    const { domain, subject, questionType, numberOfQuestions, language } = payload;
+    
+    // Fetch random questions using MongoDB $sample
+    const questions = await Question.aggregate([
+      { $match: { domain, subject, questionType, isActive: true } },
+      { $sample: { size: numberOfQuestions } }
+    ]);
+
+    if (questions.length === 0) {
+      throw new Error(`No questions found for domain: ${domain}, subject: ${subject}, type: ${questionType}`);
+    }
+
+    const questionIds = questions.map(q => q._id);
+
     const session = new ExamSession({
       studentId,
-      examConfigId,
+      domain,
+      subject,
+      questionType,
+      numberOfQuestions: questionIds.length,
+      questionIds,
       language: language || 'en',
       status: 'in_progress',
       startedAt: new Date(),
@@ -34,45 +52,16 @@ export class ExamOrchestrator {
       return { isStop: true };
     }
     if (session.status !== 'in_progress') throw new Error('Invalid session status');
+    
     const answeredCount = session.questionsAsked.length;
-    const questionLimit = 10;
+    const questionLimit = session.numberOfQuestions;
 
     if (answeredCount >= questionLimit) {
       return { isStop: true };
     }
 
-    // Determine target difficulty
-    let targetDifficulty = 'easy';
-    if (session.currentAbility > 0.4) targetDifficulty = 'hard';
-    else if (session.currentAbility > 0) targetDifficulty = 'medium';
-
-    // Find questions that haven't been asked yet matching the difficulty
-    const askedIds = session.questionsAsked.map(q => q.questionId);
-    let question = await Question.findOne({ 
-      _id: { $nin: askedIds },
-      difficulty: targetDifficulty
-    });
-
-    if (!question) {
-      // Not enough questions in MongoDB -> Call Gemini
-      try {
-        const newQuestions = await aiService.generateQuestions('Full Stack Engineering', targetDifficulty, 1);
-        if (newQuestions && newQuestions.length > 0) {
-          const savedQuestions = await Question.insertMany(newQuestions);
-          question = savedQuestions[0] as any;
-        }
-      } catch (aiError: any) {
-        logger.error(`[ORCHESTRATOR] AI Generation failed: ${JSON.stringify(aiError)}`);
-        // Fallback: try to find ANY question in the DB that hasn't been asked, regardless of difficulty
-        logger.info(`[ORCHESTRATOR] Attempting to find a fallback cached question...`);
-        question = await Question.findOne({ _id: { $nin: askedIds } });
-        
-        if (!question) {
-          // If we still don't have a question, we either stop the exam or throw the structured error so the frontend knows WHY it failed.
-          throw aiError; 
-        }
-      }
-    }
+    const nextQuestionId = session.questionIds[answeredCount];
+    const question = await Question.findById(nextQuestionId);
 
     if (!question) {
       return { isStop: true };
@@ -88,36 +77,21 @@ export class ExamOrchestrator {
 
     // Handle translation based on session language
     const lang = session.language || 'en';
-    let displayQuestionText = question.question;
+    let displayQuestionText = question.questionText;
     let displayOptions = question.options;
-
-    if (lang !== 'en' && question.translations) {
-      let translation;
-      if (typeof question.translations.get === 'function') {
-        translation = question.translations.get(lang);
-      } else {
-        translation = question.translations[lang];
-      }
-      
-      if (translation) {
-        displayQuestionText = translation.question || displayQuestionText;
-        displayOptions = translation.options || displayOptions;
-      }
-    }
 
     return {
       question: {
         id: question._id.toString(),
-        type: question.type,
+        type: question.questionType,
         text: displayQuestionText,
         options: displayOptions,
-        marks: question.marks,
         difficulty: question.difficulty,
         questionNumber: answeredCount + 1,
         totalQuestions: questionLimit,
       },
       index: answeredCount,
-      status: 'adaptive',
+      status: 'deterministic',
       isStop: false,
     };
   }
@@ -139,13 +113,14 @@ export class ExamOrchestrator {
       const question = await Question.findById(questionId);
       if (question) {
         correctAnswer = question.correctAnswer || '';
-        explanation = question.explanation || '';
-        if (question.type === 'MCQ') {
-          const selectedOption = (question.options || []).find((o: any) => o.label === answer);
-          const selectedText = selectedOption ? selectedOption.text : answer;
+        explanation = question.answerExplanation || '';
+        if (question.questionType === 'MCQ') {
+          const selectedOption = (question.options || []).find((o: any) => o.key === answer || o.text === answer);
+          const selectedText = selectedOption ? selectedOption.key : answer;
           isCorrect = selectedText === question.correctAnswer;
         } else {
-          isCorrect = answer.length > 30;
+          // SAQ Placeholder logic
+          isCorrect = answer.trim().length > 10; // very basic logic for SAQ
         }
         askedQuestion.isCorrect = isCorrect;
 
@@ -200,55 +175,12 @@ export class ExamOrchestrator {
     const resultDoc = new Result({
       sessionId: session._id,
       studentId: session.studentId,
-      examConfigId: session.examConfigId,
       score: totalScore,
       maxScore: maxScore,
       percentage: scorePercentage,
       grade
     });
     await resultDoc.save();
-
-    // Trigger Certificate Generation
-    if (scorePercentage >= 70) {
-      try {
-        const student = await User.findById(session.studentId);
-        const examConfig = await ExamConfig.findById(session.examConfigId);
-        
-        if (student && examConfig) {
-          const cert = await generateCertificateLogic({
-            userId: session.studentId.toString(),
-            examId: session.examConfigId.toString(),
-            studentName: student.name,
-            studentEmail: student.email,
-            examName: examConfig.title,
-            subject: examConfig.subject || examConfig.title,
-            totalQuestions,
-            correctAnswers: correctCount,
-            wrongAnswers: totalQuestions - correctCount,
-            skippedAnswers: 0,
-            timeTaken: 120, // Example hardcoded since time wasn't tracked fully here
-            difficultyReached: 'medium',
-          });
-
-          if (cert) {
-             const pdfBuffer = await generateCertificatePDF(cert);
-             await emailService.sendEmail(
-                student.email,
-                'Your AdaptiveAI Certificate of Completion',
-                `Congratulations ${student.name}! You scored ${cert.percentage.toFixed(2)}% in ${examConfig.title}.`,
-                undefined,
-                [{
-                  filename: `${cert.certificateId}.pdf`,
-                  content: pdfBuffer,
-                  contentType: 'application/pdf'
-                }]
-             );
-          }
-        }
-      } catch (err) {
-        logger.error('Error auto-generating certificate:', err);
-      }
-    }
 
     return session;
   }
@@ -266,18 +198,15 @@ export class ExamOrchestrator {
 
     const questionIds = session.questionsAsked.map(q => q.questionId);
     const questions = await Question.find({ _id: { $in: questionIds } });
-    
-    const cert = await Certificate.findOne({ userId: session.studentId, examId: session.examConfigId });
-    const certificateId = cert ? cert.certificateId : null;
 
     return {
       score: { total: totalScore, max: maxScore, percentage: scorePercentage },
       grade,
-      certificateId,
+      certificateId: null,
       percentile: 85,
       ability: session.currentAbility,
       confidenceInterval: [session.currentAbility - 0.15, session.currentAbility + 0.15],
-      examTitle: 'Adaptive Assessment',
+      examTitle: `${session.subject} Exam`,
       completedAt: session.completedAt || new Date(),
       sections: [
         { name: 'Core Subject Areas', score: totalScore, max: maxScore, percentage: scorePercentage, color: 'bg-primary-500' }
@@ -286,7 +215,7 @@ export class ExamOrchestrator {
         { questionIndex: 1, ability: 0.0, timestamp: new Date() }
       ],
       topics: [
-        { name: 'General', score: totalScore, max: maxScore, percentage: scorePercentage, questionsAttempted: totalQuestions }
+        { name: session.subject, score: totalScore, max: maxScore, percentage: scorePercentage, questionsAttempted: totalQuestions }
       ],
       recommendations: [
         {
@@ -298,24 +227,23 @@ export class ExamOrchestrator {
       answers: session.questionsAsked.map(qa => {
         const qDetail = questions.find(q => q._id.toString() === qa.questionId.toString());
         let studentAnswerText = qa.answer;
-        if (qDetail && qDetail.type === 'MCQ') {
-           const selectedOpt = (qDetail.options || []).find((o: any) => o.label === qa.answer);
+        if (qDetail && qDetail.questionType === 'MCQ') {
+           const selectedOpt = (qDetail.options || []).find((o: any) => o.key === qa.answer);
            if (selectedOpt) studentAnswerText = selectedOpt.text;
         }
         return {
           question: qDetail ? {
             id: qDetail._id.toString(),
-            type: qDetail.type,
-            text: qDetail.question,
+            type: qDetail.questionType,
+            text: qDetail.questionText,
             options: qDetail.options,
-            marks: qDetail.marks,
           } : null,
           studentAnswer: studentAnswerText,
-          correctAnswer: qDetail?.correctAnswer || qDetail?.modelAnswer || '',
+          correctAnswer: qDetail?.correctAnswer || '',
           isCorrect: qa.isCorrect,
           marksObtained: qa.isCorrect ? 2 : 0,
           maxMarks: 2,
-          aiExplanation: qDetail?.explanation || 'Explanation not available.'
+          aiExplanation: qDetail?.answerExplanation || 'Explanation not available.'
         };
       })
     };

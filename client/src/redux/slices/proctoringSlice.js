@@ -1,8 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  faceDetected: false,
-  confidence: 0,
   warnings: 0,
   violations: 0,
   cameraStatus: 'INITIALIZING', // INITIALIZING, READY, ERROR, DENIED
@@ -13,10 +11,6 @@ const proctoringSlice = createSlice({
   name: 'proctoring',
   initialState,
   reducers: {
-    setFaceDetected: (state, action) => {
-      state.faceDetected = action.payload.detected;
-      state.confidence = action.payload.confidence || 0;
-    },
     incrementWarning: (state) => {
       state.warnings += 1;
     },
@@ -36,7 +30,6 @@ const proctoringSlice = createSlice({
 });
 
 export const { 
-  setFaceDetected, 
   incrementWarning, 
   incrementViolation, 
   setCameraStatus,

@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
 export const startExamSchema = z.object({
-  examConfigId: z.string().min(24, 'Invalid Config ID'),
+  domain: z.string().min(1, 'Domain is required'),
+  subject: z.string().min(1, 'Subject is required'),
+  questionType: z.enum(['MCQ', 'SAQ']),
+  numberOfQuestions: z.number().min(1).max(100),
   language: z.string().optional(),
 });
 

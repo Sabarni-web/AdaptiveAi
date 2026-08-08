@@ -32,10 +32,10 @@ export const useExam = () => {
     error,
   } = useSelector((state) => state.exam);
 
-  const startExam = async (examConfigId, language = 'en') => {
+  const startExam = async (payload, language = 'en') => {
     dispatch(initExamStart());
     try {
-      const data = await examService.startExam(examConfigId, language);
+      const data = await examService.startExam(payload, language);
       dispatch(initExamSuccess(data));
       navigate(`/exam/${data.sessionId}`);
     } catch (err) {

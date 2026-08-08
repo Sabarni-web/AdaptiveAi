@@ -14,7 +14,7 @@ export const MCQ = ({
       const num = parseInt(e.key, 10);
       if (num >= 1 && num <= options.length) {
         const option = options[num - 1];
-        if (option) onSelect(option.label);
+        if (option) onSelect(option.key || option.label);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -24,12 +24,13 @@ export const MCQ = ({
   return (
     <div className="flex flex-col gap-4 w-full">
       {options.map((opt, idx) => {
-        const isSelected = selected === opt.label;
+        const optKey = opt.key || opt.label;
+        const isSelected = selected === optKey;
         return (
           <button
-            key={opt.label || idx}
+            key={optKey || idx}
             disabled={disabled}
-            onClick={() => onSelect(opt.label)}
+            onClick={() => onSelect(optKey)}
             className={clsx(
               'w-full text-left px-5 py-4 rounded-xl transition-all flex items-center gap-4 focus:outline-none focus:ring-2 focus:ring-mint disabled:opacity-50 disabled:cursor-not-allowed',
               isSelected
@@ -45,7 +46,7 @@ export const MCQ = ({
                   : 'bg-void border-hair text-secondary'
               )}
             >
-              {opt.label}
+              {optKey}
             </span>
             <span className="text-sm md:text-base leading-relaxed">{opt.text}</span>
           </button>

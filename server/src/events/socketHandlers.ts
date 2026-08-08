@@ -54,25 +54,7 @@ export const setupSocketHandlers = (io: Server) => {
        logger.info(`Session ${sessionId} fullscreen changed: ${isFullscreen}`);
     });
 
-    // Proctoring events
-    socket.on('faceDetected', ({ sessionId, confidence, timestamp }) => {
-       io.to(`exam_monitor:${sessionId}`).emit('student_face_detected', { userId: user.userId, confidence, timestamp });
-    });
 
-    socket.on('faceLost', ({ sessionId, timestamp }) => {
-       io.to(`exam_monitor:${sessionId}`).emit('student_face_lost', { userId: user.userId, timestamp });
-    });
-
-    socket.on('warningIssued', ({ sessionId, timestamp }) => {
-       io.to(`exam_monitor:${sessionId}`).emit('student_warning_issued', { userId: user.userId, timestamp });
-       // Also notify admin dashboard
-       io.to('admin_dashboard').emit('proctoring_alert', { type: 'WARNING', userId: user.userId, sessionId, timestamp });
-    });
-
-    socket.on('violationLogged', ({ sessionId, duration, timestamp }) => {
-       io.to(`exam_monitor:${sessionId}`).emit('student_violation', { userId: user.userId, duration, timestamp });
-       io.to('admin_dashboard').emit('proctoring_alert', { type: 'VIOLATION', userId: user.userId, sessionId, duration, timestamp });
-    });
 
     // Teacher events
     socket.on('join_monitoring', ({ examId }) => {
