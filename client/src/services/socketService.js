@@ -6,7 +6,7 @@ class SocketService {
   }
 
   connect(token) {
-    if (this.socket?.connected) return;
+    if (this.socket) return; // Wait, if it exists, it's either connecting or connected.
 
     const url = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     this.socket = io(url, {
@@ -15,6 +15,7 @@ class SocketService {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      transports: ['websocket'], // Force WebSockets to prevent polling spam
     });
 
     console.log('Socket.IO connection initiated');

@@ -9,9 +9,8 @@ export const useSocket = (sessionId) => {
     if (token) {
       socketService.connect(token);
     }
-    return () => {
-      socketService.disconnect();
-    };
+    // We do NOT disconnect on unmount here to prevent 
+    // nested components from destroying the shared socket.
   }, [token]);
 
   // Periodic heartbeat

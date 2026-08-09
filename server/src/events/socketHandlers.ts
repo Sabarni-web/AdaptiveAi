@@ -54,7 +54,38 @@ export const setupSocketHandlers = (io: Server) => {
        logger.info(`Session ${sessionId} fullscreen changed: ${isFullscreen}`);
     });
 
+    // AI Proctoring events
+    socket.on('multiplePersonDetected', (data) => {
+      logger.warn(`Multiple person detected for session ${data.sessionId}: ${data.personsDetected} persons`);
+      io.to('admin_dashboard').emit('multiplePersonDetected', data);
+    });
 
+    socket.on('multiplePersonWarning', (data) => {
+      io.to('admin_dashboard').emit('multiplePersonWarning', data);
+    });
+
+    socket.on('multiplePersonResolved', (data) => {
+      logger.info(`Multiple person resolved for session ${data.sessionId}`);
+      io.to('admin_dashboard').emit('multiplePersonResolved', data);
+    });
+
+    socket.on('integrityUpdated', (data) => {
+      io.to('admin_dashboard').emit('integrityUpdated', data);
+    });
+
+    // Head Direction events
+    socket.on('headDirectionChanged', (data) => {
+      io.to('admin_dashboard').emit('headDirectionChanged', data);
+    });
+    
+    socket.on('lookingAwayWarning', (data) => {
+      io.to('admin_dashboard').emit('lookingAwayWarning', data);
+    });
+    
+    socket.on('lookingAwayViolation', (data) => {
+      logger.warn(`Looking away violation for session ${data.sessionId}: ${data.duration} seconds`);
+      io.to('admin_dashboard').emit('lookingAwayViolation', data);
+    });
 
     // Teacher events
     socket.on('join_monitoring', ({ examId }) => {
