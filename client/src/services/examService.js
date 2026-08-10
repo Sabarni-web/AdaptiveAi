@@ -347,6 +347,30 @@ const examService = {
       throw error;
     }
   },
+
+  getRecommendation: async () => {
+    try {
+      const response = await apiClient.get('/analytics/recommendations/me');
+      return response.data.recommendation;
+    } catch (error) {
+      if (import.meta.env.DEV && !error.response) {
+        return {
+          type: 'WEAK_SUBJECT',
+          domain: 'CSE Core',
+          subject: 'Database Management Systems',
+          topics: ['Normalization', 'SQL Joins', 'Transactions'],
+          questionType: 'MCQ',
+          difficulty: 'Medium',
+          questionCount: 20,
+          estimatedMinutes: 25,
+          title: 'Strengthen Database Management Systems',
+          description: 'AdaptiveAI identified areas where you can improve based on your recent performance.',
+          reason: 'Your recent DBMS accuracy is 58%.'
+        };
+      }
+      throw error;
+    }
+  },
 };
 
 export default examService;

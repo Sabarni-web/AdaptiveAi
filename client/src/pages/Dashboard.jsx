@@ -11,6 +11,7 @@ import { useExam } from '../hooks/useExam';
 import { TeacherDashboard } from './TeacherDashboard';
 import { AdminDashboard } from './AdminDashboard';
 import examService from '../services/examService';
+import { RecommendationCard } from '../components/dashboard/RecommendationCard';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -82,52 +83,8 @@ export const Dashboard = () => {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Start Exam Card */}
-        <Card
-          className="card card--float lg:col-span-2 flex flex-col justify-between gap-6 !p-8"
-        >
-          <div className="flex flex-col gap-2">
-            <span className="bg-mint/10 text-mint border border-mint/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider w-fit">
-              Assigned Evaluation
-            </span>
-            <h2 className="text-xl md:text-2xl font-black leading-tight mt-1">
-              Full Stack Engineering Evaluation
-            </h2>
-            <p className="text-sm text-secondary max-w-md font-medium">
-              Take the computer science adaptive evaluation test containing algorithmic and system design questions.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex gap-4 text-xs font-semibold text-secondary">
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" /> 30 Minutes
-              </span>
-              <span className="flex items-center gap-1.5">
-                <BookOpen className="h-4 w-4" /> Adaptive limit
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="bg-transparent border border-hair rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mint"
-              >
-                <option value="en">English</option>
-                <option value="hi">हिन्दी (Hindi)</option>
-                <option value="bn">বাংলা (Bengali)</option>
-              </select>
-              <Button
-                onClick={handleStartExam}
-                variant="primary"
-                className="flex items-center gap-2"
-              >
-                <Play className="h-4 w-4 fill-current" />
-                <span>Start Exam</span>
-              </Button>
-            </div>
-          </div>
-        </Card>
+        {/* AI Recommendation Center */}
+        <RecommendationCard />
 
         {/* Quick Stats Widget */}
         <Card title="Quick Stats" description="Your aggregate progress.">
