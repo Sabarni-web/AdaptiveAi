@@ -54,14 +54,7 @@ export const StudentExams = () => {
       return;
     }
     
-    // Auto-select type based on availability
-    let qType = 'MCQ';
-    let available = subject.mcqCount;
-    
-    if (available === 0 && subject.saqCount > 0) {
-      qType = 'SAQ';
-      available = subject.saqCount;
-    }
+    const available = (subject.mcqCount || 0) + (subject.saqCount || 0);
     
     if (available === 0) {
       toast.error(`No questions available for this subject.`);
@@ -73,7 +66,7 @@ export const StudentExams = () => {
     startExam({
       domain: selectedDomain,
       subject: subject.name,
-      questionType: qType,
+      questionType: 'Mixed',
       numberOfQuestions: numQ
     });
   };

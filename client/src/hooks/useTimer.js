@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export const useTimer = (initialSeconds = 3600, warningThreshold = 300, onTimeUp, onWarning) => {
-  const [timeRemaining, setTimeRemaining] = useState(initialSeconds);
+export const useTimer = ({ totalSeconds = 3600, warningThreshold = 300, startedAt, onTimeUp, onWarning }) => {
+  const [timeRemaining, setTimeRemaining] = useState(totalSeconds);
   const [isRunning, setIsRunning] = useState(false);
 
   const timerRef = useRef(null);
-  const endTimeRef = useRef(null);
 
   const formatTime = (totalSeconds) => {
+    if (totalSeconds <= 0) return '00:00';
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
@@ -23,8 +23,7 @@ export const useTimer = (initialSeconds = 3600, warningThreshold = 300, onTimeUp
   const start = useCallback(() => {
     if (isRunning) return;
     setIsRunning(true);
-    endTimeRef.current = Date.now() + timeRemaining * 1000;
-  }, [isRunning, timeRemaining]);
+  }, [isRunning]);
 
   const pause = useCallback(() => {
     if (!isRunning) return;
@@ -34,10 +33,6 @@ export const useTimer = (initialSeconds = 3600, warningThreshold = 300, onTimeUp
     }
   }, [isRunning]);
 
-  const resume = useCallback(() => {
-    start();
-  }, [start]);
-
   const stop = useCallback(() => {
     setIsRunning(false);
     if (timerRef.current) {
@@ -46,11 +41,15 @@ export const useTimer = (initialSeconds = 3600, warningThreshold = 300, onTimeUp
   }, []);
 
   useEffect(() => {
+    // Determine the precise start time
+    const startTime = startedAt ? new Date(startedAt).getTime() : Date.now();
+    const endTime = startTime + totalSeconds * 1000;
+
     const tick = () => {
       if (!isRunning) return;
 
       const now = Date.now();
-      const diff = Math.max(0, Math.round((endTimeRef.current - now) / 1000));
+      const diff = Math.max(0, Math.round((endTime - now) / 1000));
 
       setTimeRemaining(diff);
 
@@ -67,7 +66,16 @@ export const useTimer = (initialSeconds = 3600, warningThreshold = 300, onTimeUp
     };
 
     if (isRunning) {
-      timerRef.current = requestAnimationFrame(tick);
+      // Calculate initial diff to avoid waiting for the first tick
+      const now = Date.now();
+      const diff = Math.max(0, Math.round((endTime - now) / 1000));
+      setTimeRemaining(diff);
+      if (diff <= 0) {
+        setIsRunning(false);
+        if (onTimeUp) onTimeUp();
+      } else {
+        timerRef.current = requestAnimationFrame(tick);
+      }
     }
 
     return () => {
@@ -75,39 +83,16 @@ export const useTimer = (initialSeconds = 3600, warningThreshold = 300, onTimeUp
         cancelAnimationFrame(timerRef.current);
       }
     };
-  }, [isRunning, warningThreshold, onWarning, onTimeUp]);
-
-  // Sync with tab focus changes (prevent suspension drift)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Tab inactive: store remaining time
-        if (timerRef.current) cancelAnimationFrame(timerRef.current);
-      } else {
-        // Tab active: recalculate exact end time
-        if (isRunning) {
-          endTimeRef.current = Date.now() + timeRemaining * 1000;
-          timerRef.current = requestAnimationFrame(() => {});
-        }
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isRunning, timeRemaining]);
+  }, [isRunning, totalSeconds, warningThreshold, onWarning, onTimeUp, startedAt]);
 
   return {
     timeRemaining,
     formattedTime: formatTime(timeRemaining),
-    isWarning: timeRemaining <= warningThreshold && timeRemaining > Math.floor(warningThreshold / 3),
-    isCritical: timeRemaining <= Math.floor(warningThreshold / 3),
+    isWarning: timeRemaining <= warningThreshold && timeRemaining > 10,
+    isCritical: timeRemaining <= 10,
     isRunning,
     start,
     pause,
-    resume,
     stop,
-    setTimeRemaining: (sec) => {
-      setTimeRemaining(sec);
-      endTimeRef.current = Date.now() + sec * 1000;
-    },
   };
 };

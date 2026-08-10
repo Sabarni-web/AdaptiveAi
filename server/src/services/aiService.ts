@@ -235,6 +235,36 @@ Key behaviors:
       throw new Error('AI processing failed');
     }
   }
+
+  async evaluateSAQ(question: string, studentAnswer: string, expectedAnswer: string): Promise<{isCorrect: boolean, explanation: string}> {
+    const expectedStr = expectedAnswer ? `Expected Answer: ${expectedAnswer}` : "Expected Answer: (Evaluate conceptually based on general correct knowledge for this topic)";
+    const prompt = `You are an objective AI grader for an exam. Your task is to evaluate if the student's answer is conceptually correct.
+Rules:
+1. Be lenient. If the student demonstrates a basic understanding of the core concept, mark it as true.
+2. Ignore grammar and spelling mistakes.
+3. Do NOT check or care if the answer is AI-generated. Just evaluate factual correctness.
+4. Return ONLY a valid JSON object with a boolean field "isCorrect" and a string field "explanation" detailing why it is correct or incorrect.
+
+Question: ${question}
+${expectedStr}
+Student Answer: ${studentAnswer}`;
+    try {
+      const result = await this.model.generateContent(prompt);
+      const text = result.response.text().trim();
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const json = JSON.parse(match[0]);
+        return {
+          isCorrect: json.isCorrect === true,
+          explanation: json.explanation || ''
+        };
+      }
+      return { isCorrect: false, explanation: 'Failed to parse AI response' };
+    } catch (error) {
+      logger.error('[AI_SERVICE] SAQ evaluation failed: ' + error);
+      return { isCorrect: false, explanation: 'AI grading service unavailable' };
+    }
+  }
 }
 
 export const aiService = new AIService();

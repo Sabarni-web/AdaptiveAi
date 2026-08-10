@@ -111,6 +111,18 @@ export const Exam = () => {
     }
   };
 
+  const handleTimeUp = () => {
+    toast.error('Time is up! Auto-submitting your answer.');
+    handleNext();
+  };
+
+  const getQuestionTimeLimit = (question) => {
+    if (!question) return 10;
+    if (question.type === 'MCQ') return 10;
+    if (question.type === 'SAQ' || question.type === 'Descriptive' || question.type === 'DESCRIPTIVE') return 180;
+    return 10; // Default fallback
+  };
+
   const handleFinalSubmit = async () => {
     await finishExam(sessionId);
     exit();
@@ -148,9 +160,10 @@ export const Exam = () => {
           <div className="flex items-center gap-4">
             <Timer
               key={currentQuestion?.id || 'timer'}
-              totalSeconds={120}
-              warningAt={10}
-              onTimeUp={handleNext}
+              totalSeconds={getQuestionTimeLimit(currentQuestion)}
+              warningAt={getQuestionTimeLimit(currentQuestion) === 60 ? 10 : 30}
+              startedAt={currentQuestion?.startedAt}
+              onTimeUp={handleTimeUp}
               isRunning={!isPaused && !feedback}
             />
             <Button variant="danger" size="sm" onClick={() => setShowExitModal(true)}>
