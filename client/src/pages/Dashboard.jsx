@@ -12,6 +12,7 @@ import { TeacherDashboard } from './TeacherDashboard';
 import { AdminDashboard } from './AdminDashboard';
 import examService from '../services/examService';
 import { RecommendationCard } from '../components/dashboard/RecommendationCard';
+import { FloatingTutor } from '../components/tutor/FloatingTutor';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -119,6 +120,8 @@ export const Dashboard = () => {
           }
         />
       </Card>
+      
+      <FloatingTutor />
     </div>
   );
 };

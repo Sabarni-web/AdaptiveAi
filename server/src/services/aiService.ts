@@ -12,7 +12,7 @@ export class AIService {
       logger.error('GEMINI_API_KEY is not defined in environment variables');
     }
     this.genAI = new GoogleGenerativeAI(apiKey || '');
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
   }
 
   async generateQuestions(subject: string, difficulty: string, count: number): Promise<any[]> {
@@ -188,6 +188,52 @@ FINAL RULE: Before returning, verify that the 'hi' object has pure Hindi (except
       }
     }
     throw { isAIError: true, stage: 'UNKNOWN', attempt: 3, reason: 'Exhausted retries' };
+  }
+
+  async askTutor(conversationHistory: any[]): Promise<string> {
+    logger.info(`[AI_SERVICE] askTutor called with ${conversationHistory.length} messages.`);
+    try {
+      const systemInstruction = `
+You are the "AdaptiveAI Tutor", a friendly, clear, educational, patient, accurate, and concise AI assistant built into an EdTech platform.
+Your primary role is to answer subjective academic questions, explain concepts clearly, provide examples, and support follow-up questions from students.
+You should NOT act like a generic chatbot, but rather an expert tutor (especially strong in Computer Science, Programming, and Mathematics).
+
+Key behaviors:
+1. Explain difficult concepts in steps.
+2. Use examples wherever appropriate.
+3. Use Markdown formatting (headings, bold, bullet points, and code blocks with language specified).
+4. Do NOT output HTML.
+5. If the user asks a completely irrelevant non-academic question (e.g. "What is your favorite movie?"), politely guide them back to academic topics.
+6. If the user asks for a simple explanation ("Explain Simpler"), break it down into an intuitive analogy.
+7. If the user asks for a quiz ("Quiz Me"), provide a single, conceptual multiple-choice question on the topic they were just studying, labeled clearly as a quiz.
+`;
+
+      const formattedHistory = conversationHistory.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }));
+
+      // Initialize a new chat session to use system instructions (via generating with context or starting chat)
+      // The easiest way in Gemini SDK is to use startChat with history, but system instruction requires the model to be initialized with it, 
+      // or we can just prepend the system instruction to the very first user message if it's not supported directly in the basic setup.
+      // Assuming google/generative-ai version supports systemInstruction in getGenerativeModel:
+      const tutorModel = this.genAI.getGenerativeModel({ 
+        model: 'gemini-flash-latest',
+        systemInstruction: systemInstruction 
+      });
+
+      const chat = tutorModel.startChat({
+        history: formattedHistory.slice(0, -1), // All except the last message which is the current prompt
+      });
+
+      const lastMessage = formattedHistory[formattedHistory.length - 1]?.parts[0]?.text || '';
+      const result = await chat.sendMessage(lastMessage);
+      
+      return result.response.text();
+    } catch (error: any) {
+      logger.error(`[AI_SERVICE] askTutor failed: ${error.message}`);
+      throw new Error('AI processing failed');
+    }
   }
 }
 

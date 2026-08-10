@@ -7,7 +7,7 @@ import { logger } from '../utils/logger';
 export const logMultiplePersonViolation = async (req: Request, res: Response): Promise<void> => {
   try {
     const { examId, questionNumber, personsDetected, duration, warningLevel, integrityPenalty } = req.body;
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id || (req.user as any)?.userId;
 
     if (!userId) {
       res.status(401).json({ message: 'Unauthorized' });
@@ -29,7 +29,7 @@ export const logMultiplePersonViolation = async (req: Request, res: Response): P
     // Deduct integrity score from the active session if one exists
     const session = await ExamSession.findOne({ studentId: userId, examConfigId: examId, status: 'in_progress' });
     if (session) {
-      session.integrityScore = Math.max(0, (session.integrityScore || 100) - integrityPenalty);
+      (session as any).integrityScore = Math.max(0, ((session as any).integrityScore || 100) - integrityPenalty);
       await session.save();
     }
 
@@ -54,7 +54,7 @@ export const getViolationsForExam = async (req: Request, res: Response): Promise
 export const getIntegrityScore = async (req: Request, res: Response): Promise<void> => {
   try {
     const { examId } = req.params;
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id || (req.user as any)?.userId;
     
     if (!userId) {
       res.status(401).json({ message: 'Unauthorized' });
@@ -63,7 +63,7 @@ export const getIntegrityScore = async (req: Request, res: Response): Promise<vo
 
     const session = await ExamSession.findOne({ studentId: userId, examConfigId: examId });
     if (session) {
-      res.json({ integrityScore: session.integrityScore || 100 });
+      res.json({ integrityScore: (session as any).integrityScore || 100 });
     } else {
       res.status(404).json({ message: 'Session not found' });
     }
@@ -76,7 +76,7 @@ export const getIntegrityScore = async (req: Request, res: Response): Promise<vo
 export const logHeadDirectionViolation = async (req: Request, res: Response): Promise<void> => {
   try {
     const { examId, questionNumber, direction, duration, warningLevel, integrityPenalty } = req.body;
-    const userId = req.user?.userId || (req.user as any)?.id;
+    const userId = (req.user as any)?.id || (req.user as any)?.userId;
 
     if (!userId) {
       res.status(401).json({ message: 'Unauthorized' });
@@ -97,7 +97,7 @@ export const logHeadDirectionViolation = async (req: Request, res: Response): Pr
 
     const session = await ExamSession.findOne({ studentId: userId, examConfigId: examId, status: 'in_progress' });
     if (session) {
-      session.integrityScore = Math.max(0, (session.integrityScore || 100) - integrityPenalty);
+      (session as any).integrityScore = Math.max(0, ((session as any).integrityScore || 100) - integrityPenalty);
       await session.save();
     }
 

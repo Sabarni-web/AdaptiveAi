@@ -16,6 +16,17 @@ export interface IUser extends Document {
     rollNumber?: string;
     subjectsTaught?: string[];
   };
+  academicInfo?: {
+    course?: string;
+    year?: string;
+    primaryDomain?: string;
+    preferredLanguage?: string;
+  };
+  learningPreferences?: {
+    preferredDifficulty?: 'Easy' | 'Medium' | 'Hard' | 'Adaptive';
+    preferredQuestionTypes?: string[];
+    aiTutorStyle?: 'Beginner' | 'Balanced' | 'Detailed' | 'Exam Focused';
+  };
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -37,6 +48,17 @@ const UserSchema = new Schema<IUser>(
       department: String,
       rollNumber: String,
       subjectsTaught: [String],
+    },
+    academicInfo: {
+      course: String,
+      year: String,
+      primaryDomain: String,
+      preferredLanguage: String,
+    },
+    learningPreferences: {
+      preferredDifficulty: { type: String, enum: ['Easy', 'Medium', 'Hard', 'Adaptive'], default: 'Adaptive' },
+      preferredQuestionTypes: [{ type: String }],
+      aiTutorStyle: { type: String, enum: ['Beginner', 'Balanced', 'Detailed', 'Exam Focused'], default: 'Balanced' },
     },
     lastLogin: Date,
   },

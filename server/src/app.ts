@@ -14,8 +14,10 @@ import analyticsRoutes from './routes/analytics.routes';
 import teacherRoutes from './routes/teacher.routes';
 import adminRoutes from './routes/admin.routes';
 import certificateRoutes from './routes/certificate.routes';
+import profileRoutes from './routes/profile.routes';
 import questionBankRoutes from './routes/questionBank.routes';
 import proctoringRoutes from './routes/proctoring.routes';
+import tutorRoutes from './routes/tutor.routes';
 import { setupSwagger } from './config/swagger';
 
 const app = express();
@@ -53,8 +55,10 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/certificates', certificateRoutes);
+app.use('/api/v1/users', profileRoutes);
 app.use('/api/v1/question-bank', questionBankRoutes);
 app.use('/api/v1/proctoring', proctoringRoutes);
+app.use('/api/v1/tutor', tutorRoutes);
 app.use(errorHandler);
 
 export default app;
