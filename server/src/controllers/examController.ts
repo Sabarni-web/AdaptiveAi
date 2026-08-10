@@ -90,7 +90,7 @@ export class ExamController {
 
       const formattedHistory = history.map((session: any) => ({
         sessionId: session._id,
-        title: session.examConfigId?.title || 'Full Stack Engineering Evaluation',
+        title: session.examConfigId?.title || session.subject || 'Full Stack Engineering Evaluation',
         grade: session.grade || 'B',
         score: session.percentage || 75,
         completedAt: session.completedAt || session.updatedAt

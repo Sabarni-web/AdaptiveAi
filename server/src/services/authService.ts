@@ -20,7 +20,7 @@ export class AuthService {
   private generateTokens(user: IUser): Tokens {
     const payload = { userId: user._id, email: user.email, role: user.role };
     
-    const accessToken = jwt.sign(payload, env.JWT_SECRET, { expiresIn: '15m' });
+    const accessToken = jwt.sign(payload, env.JWT_SECRET, { expiresIn: '24h' });
     
     const refreshTokenId = Math.random().toString(36).substring(2, 15);
     const refreshTokenPayload = { ...payload, tokenId: refreshTokenId };

@@ -54,7 +54,7 @@ app.use('/api/v1/teacher', teacherRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/certificates', certificateRoutes);
 app.use('/api/v1/question-bank', questionBankRoutes);
-app.use('/api/proctoring', proctoringRoutes);
+app.use('/api/v1/proctoring', proctoringRoutes);
 app.use(errorHandler);
 
 export default app;
