@@ -5,6 +5,7 @@ import { useTimer } from '../../hooks/useTimer';
 export const Timer = ({
   totalSeconds = 3600,
   warningAt = 300,
+  startedAt,
   onTimeUp,
   isRunning = false,
 }) => {
@@ -15,8 +16,7 @@ export const Timer = ({
     isCritical,
     start,
     pause,
-    setTimeRemaining,
-  } = useTimer(totalSeconds, warningAt, onTimeUp);
+  } = useTimer({ totalSeconds, warningThreshold: warningAt, startedAt, onTimeUp });
 
   useEffect(() => {
     if (!isRunning || timeRemaining <= 0) {
@@ -27,10 +27,8 @@ export const Timer = ({
     start();
   }, [isRunning, timeRemaining, start, pause]);
 
-  // Sync remaining seconds if parent overrides
-  useEffect(() => {
-    setTimeRemaining(totalSeconds);
-  }, [totalSeconds, setTimeRemaining]);
+  // No longer needed to manually sync totalSeconds if we use startedAt, 
+  // but if totalSeconds changes independently, the key prop in Exam.jsx handles remounting.
 
   // Change browser tab title to show remaining timer
   useEffect(() => {
@@ -61,21 +59,22 @@ export const Timer = ({
             r="9"
             className={clsx(
               'fill-none stroke-current transition-all duration-300',
-              timeRemaining < 60 ? 'text-mint animate-pulse' : 'text-mint-dim'
+              isCritical ? 'text-red-500 animate-pulse' : isWarning ? 'text-amber-500' : 'text-mint-dim'
             )}
             strokeWidth="2"
             strokeDasharray={56.5}
-            strokeDashoffset={56.5 - (56.5 * timeRemaining) / totalSeconds}
+            strokeDashoffset={56.5 - (56.5 * (timeRemaining > 0 ? timeRemaining : 0)) / totalSeconds}
           />
         </svg>
       </div>
       <span
         className={clsx(
-          'text-base font-bold font-mono tracking-wider transition-colors duration-200',
-          timeRemaining < 60 ? 'text-mint animate-pulse' : 'text-primary'
+          'text-base font-bold font-mono tracking-wider transition-colors duration-200 flex gap-1',
+          isCritical ? 'text-red-500 animate-pulse' : isWarning ? 'text-amber-500' : 'text-primary'
         )}
       >
-        {formattedTime}
+        <span className="text-sm font-semibold opacity-80 uppercase tracking-widest hidden sm:inline">Time Remaining:</span>
+        {timeRemaining <= 0 ? 'TIME UP' : formattedTime}
       </span>
     </div>
   );

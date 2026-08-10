@@ -11,5 +11,6 @@ router.use(authMiddleware);
 router.post('/predict', rbac(['student', 'teacher', 'admin']), analyticsController.predictPerformance);
 router.post('/recommend', rbac(['student']), analyticsController.recommendStudy);
 router.get('/recommendations/me', rbac(['student']), recommendationController.getRecommendation);
+router.get('/self-improvement', rbac(['student']), analyticsController.getSelfImprovementData);
 
 export default router;

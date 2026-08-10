@@ -37,7 +37,7 @@ export const Result = () => {
 
   const handleDownloadCert = () => {
     if (result.certificateId) {
-      window.open(`http://localhost:5000/api/v1/certificates/download/${result.certificateId}`, '_blank');
+      setShowCert(true);
     } else {
       toast.error('Certificate not available for this exam yet.');
     }
@@ -121,7 +121,7 @@ export const Result = () => {
             examTitle={result.examTitle}
             score={result.score.percentage}
             grade={result.grade}
-            certificateId={`CERT-${sessionId?.substring(0, 8)?.toUpperCase() || 'MOCK'}`}
+            certificateId={result?.certificateId || `CERT-${sessionId?.substring(0, 8)?.toUpperCase() || 'MOCK'}`}
           />
         </div>
       </Modal>

@@ -2,7 +2,6 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import teacherService from '../services/teacherService';
 import { StatCard } from '../components/analytics/StatCard';
-import { RadarChart } from '../components/analytics/RadarChart';
 import { GradeDistribution } from '../components/analytics/GradeDistribution';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card } from '../components/common/Card';
@@ -71,23 +70,7 @@ export const TeacherDashboard = () => {
       </div>
 
       {/* Analytics Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <RadarChart
-          data={[
-            { skill: 'Recursion', score: 85 },
-            { skill: 'Normalization', score: 72 },
-            { skill: 'Concurrency', score: 55 },
-            { skill: 'System Design', score: 40 },
-            { skill: 'Data Structures', score: 90 },
-          ]}
-          compareData={[
-            { skill: 'Recursion', score: 70 },
-            { skill: 'Normalization', score: 65 },
-            { skill: 'Concurrency', score: 60 },
-            { skill: 'System Design', score: 50 },
-            { skill: 'Data Structures', score: 75 },
-          ]}
-        />
+      <div className="grid grid-cols-1 gap-8">
         <GradeDistribution distribution={{ A: 45, B: 30, C: 15, D: 8, F: 4 }} />
       </div>
     </div>

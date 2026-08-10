@@ -56,7 +56,7 @@ const determineBadges = (params: GenerateCertificateParams, percentage: number):
 export const generateCertificateLogic = async (params: GenerateCertificateParams): Promise<ICertificate | null> => {
   const percentage = (params.correctAnswers / params.totalQuestions) * 100;
   
-  if (percentage < 70) {
+  if (percentage < 69.5) {
     return null; // Not eligible
   }
 
