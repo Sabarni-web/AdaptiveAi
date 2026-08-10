@@ -17,9 +17,14 @@ export class ExamOrchestrator {
   async startExam(studentId: string, payload: any): Promise<IExamSession> {
     const { domain, subject, questionType, numberOfQuestions, language } = payload;
     
+    const matchQuery: any = { domain, subject, isActive: true };
+    if (questionType && questionType !== 'Mixed') {
+      matchQuery.questionType = questionType;
+    }
+
     // Fetch random questions using MongoDB $sample
     const questions = await Question.aggregate([
-      { $match: { domain, subject, questionType, isActive: true } },
+      { $match: matchQuery },
       { $sample: { size: numberOfQuestions } }
     ]);
 
@@ -55,6 +60,30 @@ export class ExamOrchestrator {
     
     const answeredCount = session.questionsAsked.length;
     const questionLimit = session.numberOfQuestions;
+
+    // If the last asked question hasn't been answered yet (e.g. page refresh), return it again
+    if (answeredCount > 0) {
+      const lastAsked = session.questionsAsked[answeredCount - 1];
+      if (!lastAsked.answeredAt) {
+        const question = await Question.findById(lastAsked.questionId);
+        if (question) {
+          return {
+            question: {
+              id: question._id.toString(),
+              type: question.questionType,
+              text: question.questionText,
+              options: question.options,
+              difficulty: question.difficulty,
+              questionNumber: answeredCount,
+              totalQuestions: questionLimit,
+            },
+            index: answeredCount - 1,
+            status: 'deterministic',
+            isStop: false,
+          };
+        }
+      }
+    }
 
     if (answeredCount >= questionLimit) {
       return { isStop: true };
@@ -119,10 +148,13 @@ export class ExamOrchestrator {
           const selectedText = selectedOption ? selectedOption.key : answer;
           isCorrect = (selectedText === question.correctAnswer) || (answer === question.correctAnswer);
         } else {
-          // SAQ Placeholder logic
-          isCorrect = answer.trim().length > 10; // very basic logic for SAQ
+          // Use AI to evaluate SAQ answers against the explanation/expected answer
+          const aiResult = await aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || '');
+          isCorrect = aiResult.isCorrect;
+          explanation = aiResult.explanation;
         }
         askedQuestion.isCorrect = isCorrect;
+        askedQuestion.aiExplanation = explanation;
 
         const oldAbility = session.currentAbility;
         session.currentAbility = isCorrect ? oldAbility + 0.5 : oldAbility - 0.5;
@@ -148,7 +180,9 @@ export class ExamOrchestrator {
 
   async submitExam(sessionId: string): Promise<any> {
     const session = await ExamSession.findById(sessionId);
-    if (!session || session.status !== 'in_progress') throw new Error('Invalid session');
+    if (!session) throw new Error('Session not found');
+    if (session.status === 'completed' || session.status === 'force_submitted') return session;
+    if (session.status !== 'in_progress') throw new Error('Invalid session');
 
     // Run scoring logic (Every question is 2 marks)
     const totalQuestions = session.questionsAsked.length;
@@ -182,6 +216,25 @@ export class ExamOrchestrator {
     });
     await resultDoc.save();
 
+    // Generate certificate if eligible
+    const user = await User.findById(session.studentId);
+    if (user && scorePercentage >= 70) {
+      await generateCertificateLogic({
+        userId: user._id.toString(),
+        examId: session._id.toString(),
+        studentName: user.name || 'Student',
+        studentEmail: user.email,
+        examName: session.subject + ' Evaluation',
+        subject: session.subject,
+        totalQuestions: totalQuestions,
+        correctAnswers: correctCount,
+        wrongAnswers: totalQuestions - correctCount,
+        skippedAnswers: 0,
+        timeTaken: session.questionsAsked.reduce((acc, q) => acc + (q.timeSpent || 0), 0),
+        difficultyReached: 'Adaptive'
+      });
+    }
+
     return session;
   }
 
@@ -198,11 +251,12 @@ export class ExamOrchestrator {
 
     const questionIds = session.questionsAsked.map(q => q.questionId);
     const questions = await Question.find({ _id: { $in: questionIds } });
+    const cert = await Certificate.findOne({ examId: session._id });
 
     return {
       score: { total: totalScore, max: maxScore, percentage: scorePercentage },
       grade,
-      certificateId: null,
+      certificateId: cert ? cert.certificateId : null,
       percentile: 85,
       ability: session.currentAbility,
       confidenceInterval: [session.currentAbility - 0.15, session.currentAbility + 0.15],
@@ -243,7 +297,7 @@ export class ExamOrchestrator {
           isCorrect: qa.isCorrect,
           marksObtained: qa.isCorrect ? 2 : 0,
           maxMarks: 2,
-          aiExplanation: qDetail?.answerExplanation || 'Explanation not available.'
+          aiExplanation: qa.aiExplanation || qDetail?.answerExplanation || 'Explanation not available.'
         };
       })
     };

@@ -17,7 +17,22 @@ export const AnswerReview = ({ answers = [] }) => {
   const getAccordionItems = () => {
     return filteredAnswers.map((ans, idx) => {
       const q = ans.question;
-      const cleanText = DOMPurify.sanitize(q.text);
+      
+      if (!q) {
+        return {
+          id: `ans-${idx}`,
+          title: (
+            <div className="flex items-center justify-between w-full pr-4 text-xs md:text-sm">
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                Question {idx + 1} (Deleted)
+              </span>
+            </div>
+          ),
+          content: <div className="text-sm text-slate-500">This question was removed from the database.</div>,
+        };
+      }
+
+      const cleanText = DOMPurify.sanitize(q.questionText || q.text || '');
 
       const title = (
         <div className="flex items-center justify-between w-full pr-4 text-xs md:text-sm">
@@ -46,20 +61,22 @@ export const AnswerReview = ({ answers = [] }) => {
 
           {q.type === 'MCQ' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {q.options?.map((opt) => {
-                const isSelected = ans.studentAnswer === opt.label;
-                const isCorrect = q.correctOption === opt.label;
+              {q.options?.map((opt, i) => {
+                if (!opt) return null;
+                const optLabel = opt.label || opt.key || String.fromCharCode(65 + i);
+                const isSelected = ans.studentAnswer === optLabel;
+                const isCorrect = (q.correctOption || q.correctAnswer) === optLabel;
                 let cardStyle = 'border-slate-200 dark:border-slate-800';
                 if (isSelected) cardStyle = 'border-red-500 bg-red-50/10 dark:bg-red-950/10';
                 if (isCorrect) cardStyle = 'border-green-500 bg-green-50/10 dark:bg-green-950/10';
 
                 return (
                   <div
-                    key={opt.label}
+                    key={optLabel}
                     className={`px-4 py-3 rounded-xl border-2 text-xs md:text-sm flex items-center gap-3 ${cardStyle}`}
                   >
-                    <span className="font-bold text-slate-400">{opt.label}</span>
-                    <span>{opt.text}</span>
+                    <span className="font-bold text-slate-400">{optLabel}</span>
+                    <span>{opt.text || 'No text provided'}</span>
                   </div>
                 );
               })}
