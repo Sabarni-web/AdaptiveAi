@@ -23,7 +23,7 @@ export class AnalyticsController {
   }
   async getSelfImprovementData(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const studentId = (req as any).user._id;
+      const studentId = (req as any).user?.userId || (req as any).user?.id || (req as any).user?._id;
       const { ExamSession } = await import('../models/ExamSession');
       
       const sessions = await ExamSession.find({ studentId, status: 'completed' })
@@ -52,44 +52,90 @@ export class AnalyticsController {
         weeklyImprovement = Math.round(last - prev);
       }
 
-      // Calculate subject performance
-      const subjectPerformance: Record<string, { total: number, count: number }> = {};
+      // Calculate subject performance keeping history
+      const subjectHistory: Record<string, any[]> = {};
       sessions.forEach(s => {
-        if (!subjectPerformance[s.subject]) {
-          subjectPerformance[s.subject] = { total: 0, count: 0 };
+        if (!subjectHistory[s.subject]) {
+          subjectHistory[s.subject] = [];
         }
-        subjectPerformance[s.subject].total += s.percentage || 0;
-        subjectPerformance[s.subject].count += 1;
+        subjectHistory[s.subject].push({
+          score: s.percentage || 0,
+          date: s.completedAt,
+          examName: s.examConfigId ? `Exam ${s.subject}` : s.subject
+        });
       });
 
-      const subjects = Object.entries(subjectPerformance).map(([name, data]) => ({
-        name,
-        score: Math.round(data.total / data.count)
-      })).sort((a, b) => b.score - a.score);
+      const topicScores = Object.entries(subjectHistory).map(([name, history]) => {
+        // history is already sorted by date because sessions are sorted by completedAt: 1
+        const latest = history[history.length - 1];
+        const previous = history.length > 1 ? history[history.length - 2] : null;
+        
+        const currentScore = Math.round(latest.score);
+        const previousScore = previous ? Math.round(previous.score) : null;
+        
+        let change = 0;
+        let trend = 'NEW';
+        
+        if (previousScore !== null) {
+          change = currentScore - previousScore;
+          if (change > 0) trend = 'UP';
+          else if (change < 0) trend = 'DOWN';
+          else trend = 'STABLE';
+        }
 
-      const strongestSkill = subjects.length > 0 ? subjects[0] : null;
-      const needsAttention = subjects.length > 1 ? subjects[subjects.length - 1] : (subjects.length === 1 && subjects[0].score < 70 ? subjects[0] : null);
+        return {
+          topic: name,
+          score: currentScore, // alias for currentScore to maintain compatibility
+          currentScore,
+          previousScore,
+          change,
+          trend,
+          examCount: history.length,
+          latestExam: latest.examName,
+          lastAttempt: latest.date
+        };
+      }).sort((a, b) => b.score - a.score); // sort highest to lowest for insight generation
 
-      const focusAreas = subjects.filter(s => s.score < 75).map(s => ({
-        topic: s.name,
+      const strongestSkill = topicScores.length > 0 ? topicScores[0] : null;
+      let needsAttention = null;
+
+      if (topicScores.length > 1) {
+        // Find the one with the biggest negative drop, or just the lowest score
+        const drops = topicScores.filter(s => s.trend === 'DOWN').sort((a, b) => a.change - b.change);
+        if (drops.length > 0) {
+          needsAttention = drops[0];
+        } else {
+          needsAttention = topicScores[topicScores.length - 1];
+        }
+      } else if (topicScores.length === 1 && topicScores[0].score < 70) {
+        needsAttention = topicScores[0];
+      }
+
+      const focusAreas = topicScores.filter(s => s.score < 75).map(s => ({
+        topic: s.topic,
         performance: s.score,
         difficulty: s.score < 50 ? 'HIGH' : 'MEDIUM',
-        recommendation: `Practice ${s.score < 50 ? 'easy to medium' : 'medium'} level questions in ${s.name} to improve accuracy.`,
+        recommendation: `Practice ${s.score < 50 ? 'easy to medium' : 'medium'} level questions in ${s.topic} to improve accuracy.`,
       })).slice(0, 3);
 
       let aiRecommendation = '';
       if (strongestSkill && needsAttention) {
-        aiRecommendation = `Your strongest area is ${strongestSkill.name}. Your ${needsAttention.name} accuracy has decreased in recent attempts. Focus on ${needsAttention.name} before your next exam.`;
+        if (needsAttention.trend === 'DOWN') {
+          aiRecommendation = `Your ${needsAttention.topic} score decreased by ${Math.abs(needsAttention.change)}% in your latest attempt. Consider reviewing the topics you missed.`;
+        } else {
+          aiRecommendation = `Your strongest current area is ${strongestSkill.topic}, while ${needsAttention.topic} needs more practice.`;
+        }
       } else if (strongestSkill) {
-        aiRecommendation = `Great job! Your strongest area is ${strongestSkill.name}. Keep practicing to maintain your high score.`;
+        if (strongestSkill.trend === 'UP') {
+          aiRecommendation = `Your ${strongestSkill.topic} performance improved by ${strongestSkill.change}% compared with your previous attempt.`;
+        } else if (strongestSkill.trend === 'NEW') {
+          aiRecommendation = `You have completed your first ${strongestSkill.topic} exam. Complete another attempt to start tracking your improvement.`;
+        } else {
+          aiRecommendation = `Great job! Your strongest area is ${strongestSkill.topic}. Keep practicing to maintain your high score.`;
+        }
       } else {
         aiRecommendation = 'Keep practicing to generate personalized AI recommendations.';
       }
-
-      const topicScores = subjects.map(s => ({
-        topic: s.name,
-        score: s.score
-      }));
 
       const data = {
         empty: false,
@@ -100,9 +146,9 @@ export class AnalyticsController {
         focusAreas,
         recentProgress,
         aiRecommendation,
-        topicScores,
+        topicScores, // this is our new rich data array
         goals: [
-          { title: `Improve ${needsAttention?.name || 'performance'} to 75%`, target: 75, current: needsAttention?.score || 0 },
+          { title: `Improve ${needsAttention?.topic || 'performance'} to 75%`, target: 75, current: needsAttention?.score || 0 },
           { title: 'Complete one adaptive practice test', target: 1, current: 0 }
         ]
       };

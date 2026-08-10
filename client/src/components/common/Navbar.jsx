@@ -68,23 +68,13 @@ export const Navbar = () => {
         </Link>
       </div>
 
-      {/* Global search */}
-      <div className="hidden md:flex items-center relative w-80">
-        <Search className={`absolute left-3 h-4.5 w-4.5 ${theme === 'light' ? 'text-white' : 'text-black'}`} />
-        <input
-          type="text"
-          placeholder="Search exams, lessons, logs..."
-          onKeyDown={handleSearch}
-          className={`w-full pl-10 pr-4 py-1.5 text-xs rounded-xl bg-transparent border border-hair outline-none focus:ring-2 transition-all ${theme === 'light' ? 'text-white placeholder-gray-400 focus:ring-white' : 'text-black placeholder-black focus:ring-black'}`}
-        />
-      </div>
-
-      {/* Action tray */}
-      <div className="flex items-center gap-4">
-        {/* Mobile Search Button */}
+      {/* Global search & Action tray */}
+      <div className="flex items-center gap-4 ml-auto">
+        {/* Search Button */}
         <button
-          onClick={() => setShowSearch(!showSearch)}
-          className={`md:hidden p-1.5 hover:bg-green-700 rounded-xl ${theme === 'light' ? 'text-white hover:text-gray-200' : 'text-black hover:text-gray-800'}`}
+          onClick={() => navigate('/exams')}
+          className={`p-1.5 hover:bg-black/10 rounded-xl transition-colors ${theme === 'light' ? 'text-white hover:text-gray-200' : 'text-black hover:text-gray-800'}`}
+          title="Search Exams"
         >
           <Search className="h-5 w-5" />
         </button>

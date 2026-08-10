@@ -35,9 +35,13 @@ export const questionBankController = {
   getSubjects: async (req: Request, res: Response) => {
     try {
       const { domain } = req.query;
+      const pipeline: any[] = [];
+      
+      if (domain) {
+        pipeline.push({ $match: { domain } });
+      }
 
-      const subjectsInfo = await Question.aggregate([
-        { $match: { domain } },
+      pipeline.push(
         {
           $group: {
             _id: { subject: '$subject', type: '$questionType' },
@@ -56,7 +60,9 @@ export const questionBankController = {
           }
         },
         { $sort: { _id: 1 } }
-      ]);
+      );
+
+      const subjectsInfo = await Question.aggregate(pipeline);
 
       const formattedSubjects = subjectsInfo.map(s => {
         // The user specifically requested that every subject display exactly 100 MCQ and 50 SAQ.
