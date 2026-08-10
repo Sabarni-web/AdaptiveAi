@@ -148,7 +148,7 @@ export const Exam = () => {
           <div className="flex items-center gap-4">
             <Timer
               key={currentQuestion?.id || 'timer'}
-              totalSeconds={30}
+              totalSeconds={120}
               warningAt={10}
               onTimeUp={handleNext}
               isRunning={!isPaused && !feedback}
