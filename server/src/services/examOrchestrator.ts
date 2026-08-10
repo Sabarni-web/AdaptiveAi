@@ -117,7 +117,7 @@ export class ExamOrchestrator {
         if (question.questionType === 'MCQ') {
           const selectedOption = (question.options || []).find((o: any) => o.key === answer || o.text === answer);
           const selectedText = selectedOption ? selectedOption.key : answer;
-          isCorrect = selectedText === question.correctAnswer;
+          isCorrect = (selectedText === question.correctAnswer) || (answer === question.correctAnswer);
         } else {
           // SAQ Placeholder logic
           isCorrect = answer.trim().length > 10; // very basic logic for SAQ

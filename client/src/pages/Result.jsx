@@ -85,6 +85,7 @@ export const Result = () => {
         completedAt={result.completedAt}
         onShare={handleShare}
         onDownload={handleDownloadCert}
+        hasCertificate={!!result.certificateId}
       />
 
       {/* Grid layouts for breakdowns and charts */}

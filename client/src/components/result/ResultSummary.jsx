@@ -15,6 +15,7 @@ export const ResultSummary = ({
   completedAt,
   onShare,
   onDownload,
+  hasCertificate = false,
 }) => {
   useEffect(() => {
     if (score.percentage >= 60) {
@@ -60,7 +61,14 @@ export const ResultSummary = ({
             <Share2 className="h-4 w-4" />
             <span>Share Result</span>
           </Button>
-          <Button variant="primary" size="sm" onClick={onDownload} className="flex items-center gap-2">
+          <Button 
+            variant="primary" 
+            size="sm" 
+            onClick={onDownload} 
+            disabled={!hasCertificate}
+            className="flex items-center gap-2"
+            title={!hasCertificate ? 'Score 70% or higher to earn a certificate' : 'Download Certificate'}
+          >
             <Download className="h-4 w-4" />
             <span>Download Certificate</span>
           </Button>

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "seed": "tsx src/scripts/seed.ts"
   },
   "keywords": [],
   "author": "",

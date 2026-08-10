@@ -15,13 +15,18 @@ import teacherRoutes from './routes/teacher.routes';
 import adminRoutes from './routes/admin.routes';
 import certificateRoutes from './routes/certificate.routes';
 import questionBankRoutes from './routes/questionBank.routes';
+import proctoringRoutes from './routes/proctoring.routes';
 import { setupSwagger } from './config/swagger';
 
 const app = express();
 
 // Middleware
-app.use(helmet());
-app.use(cors());
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(cors({
+  origin: '*', // Allow all origins for development (or specify 'http://localhost:5173')
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(
   morgan('combined', {
@@ -49,6 +54,7 @@ app.use('/api/v1/teacher', teacherRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/certificates', certificateRoutes);
 app.use('/api/v1/question-bank', questionBankRoutes);
+app.use('/api/proctoring', proctoringRoutes);
 app.use(errorHandler);
 
 export default app;

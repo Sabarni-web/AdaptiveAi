@@ -10,6 +10,8 @@ import { SubmitConfirmation } from '../components/exam/SubmitConfirmation';
 import { ExitConfirmation } from '../components/exam/ExitConfirmation';
 import { AutoSaveIndicator } from '../components/exam/AutoSaveIndicator';
 import { BreakScreen } from '../components/exam/BreakScreen';
+import { ProctoringPanel } from '../components/exam/ProctoringPanel';
+import { LookingAwayWarning } from '../components/exam/LookingAwayWarning';
 import { Button } from '../components/common/Button';
 import { toast } from 'sonner';
 import { ProctoringProvider } from '../components/proctoring/ProctoringProvider';
@@ -55,7 +57,11 @@ export const Exam = () => {
       const isFocused = !document.hidden;
       socket.emitFocusChange(sessionId, isFocused);
       if (!isFocused) {
-        toast.warning('Warning: Leaving the exam tab is recorded as a compliance event!');
+        if (import.meta.env.DEV) {
+          console.warn('Development: Leaving the exam tab (Compliance event suppressed)');
+        } else {
+          toast.warning('Warning: Leaving the exam tab is recorded as a compliance event!');
+        }
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
@@ -233,6 +239,12 @@ export const Exam = () => {
             message="Evaluation is temporarily paused by the proctor."
           />
         )}
+        {/* Floating Proctoring Panel */}
+        <div className="absolute bottom-6 left-6 z-50">
+          <ProctoringPanel examId={sessionId} questionNumber={currentQuestionIndex + 1} />
+        </div>
+
+        <LookingAwayWarning />
       </div>
     </ProctoringProvider>
   );

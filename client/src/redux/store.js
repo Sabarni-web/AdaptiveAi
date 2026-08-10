@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice';
 import uiReducer from './slices/uiSlice';
 import examReducer from './slices/examSlice';
 import proctoringReducer from './slices/proctoringSlice';
+import proctorReducer from './slices/proctorSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
     ui: uiReducer,
     exam: examReducer,
     proctoring: proctoringReducer,
+    proctor: proctorReducer,
   },
 });
