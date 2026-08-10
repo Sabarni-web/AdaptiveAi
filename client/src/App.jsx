@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './i18n';
 
 // Layouts
@@ -27,6 +28,7 @@ import { GradeReviewPage } from './pages/GradeReviewPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { QuestionGenerator } from './pages/admin/QuestionGenerator';
 import { StudentExams } from './pages/StudentExams';
+import { ExamDetails } from './pages/ExamDetails';
 import { StudentResults } from './pages/StudentResults';
 import { NotFound } from './pages/NotFound';
 import { CertificateDashboard } from './pages/admin/CertificateDashboard';
@@ -67,112 +69,119 @@ export const App = () => {
   }, [theme]);
 
   return (
-    <Routes>
-      {/* Public Auth Routes */}
-      <Route element={<PublicRoute><AuthLayout /></PublicRoute>}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-      </Route>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || 'placeholder'}>
+      <Routes>
+        {/* Public Auth Routes */}
+        <Route element={<PublicRoute><AuthLayout /></PublicRoute>}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
 
-      {/* Protected Dashboard & Core Routes */}
-      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/result/:sessionId" element={<Result />} />
+        {/* Protected Dashboard & Core Routes */}
+        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/result/:sessionId" element={<Result />} />
 
-        {/* Student Specific Routes */}
-        <Route path="/student/exams" element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
-            <StudentExams />
-          </ProtectedRoute>
-        } />
-        <Route path="/student/results" element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
-            <StudentResults />
-          </ProtectedRoute>
-        } />
+          {/* Student Specific Routes */}
+          <Route path="/exams" element={
+            <ProtectedRoute allowedRoles={['student', 'admin']}>
+              <StudentExams />
+            </ProtectedRoute>
+          } />
+          <Route path="/exams/:examId" element={
+            <ProtectedRoute allowedRoles={['student', 'admin']}>
+              <ExamDetails />
+            </ProtectedRoute>
+          } />
+          <Route path="/student/results" element={
+            <ProtectedRoute allowedRoles={['student', 'admin']}>
+              <StudentResults />
+            </ProtectedRoute>
+          } />
 
-        {/* Teacher Specific Routes */}
-        <Route
-          path="/teacher/question-bank"
-          element={
-            <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-              <QuestionBankPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/scheduler"
-          element={
-            <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-              <ExamSchedulerPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/monitor"
-          element={
-            <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-              <LiveMonitorPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher/grade-review"
-          element={
-            <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-              <GradeReviewPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Teacher Specific Routes */}
+          <Route
+            path="/teacher/question-bank"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <QuestionBankPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/scheduler"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <ExamSchedulerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/monitor"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <LiveMonitorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/grade-review"
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                <GradeReviewPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Admin Specific Routes */}
-        <Route
-          path="/admin/users"
-          element={
+          {/* Admin Specific Routes */}
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/generator"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <QuestionGenerator />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/student/certificates" element={
+            <ProtectedRoute allowedRoles={['student', 'admin']}>
+              <StudentCertificates />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/certificates" element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <UserManagementPage />
+              <CertificateDashboard />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/generator"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <QuestionGenerator />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/student/certificates" element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
-            <StudentCertificates />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/certificates" element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <CertificateDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/subjects" element={<Navigate to="/dashboard" />} />
-        <Route path="/admin/analytics" element={<Navigate to="/dashboard" />} />
-        <Route path="/admin/audit-logs" element={<Navigate to="/dashboard" />} />
-      </Route>
+          } />
+          <Route path="/admin/subjects" element={<Navigate to="/dashboard" />} />
+          <Route path="/admin/analytics" element={<Navigate to="/dashboard" />} />
+          <Route path="/admin/audit-logs" element={<Navigate to="/dashboard" />} />
+        </Route>
 
-      {/* Fullscreen Exam Layout */}
-      <Route element={<ProtectedRoute><ExamLayout /></ProtectedRoute>}>
-        <Route path="/exam/:sessionId" element={<Exam />} />
-      </Route>
+        {/* Fullscreen Exam Layout */}
+        <Route element={<ProtectedRoute><ExamLayout /></ProtectedRoute>}>
+          <Route path="/exam/:sessionId" element={<Exam />} />
+        </Route>
 
-      {/* Fallback routes */}
-      <Route path="/" element={<Navigate to="/dashboard" />} />
-      <Route path="/verify/:certificateId?" element={<VerifyCertificate />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* Fallback routes */}
+        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/verify/:certificateId?" element={<VerifyCertificate />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </GoogleOAuthProvider>
   );
 };
 

@@ -371,6 +371,28 @@ const examService = {
       throw error;
     }
   },
+
+  searchExams: async (searchParams) => {
+    try {
+      const query = new URLSearchParams(searchParams).toString();
+      const response = await apiClient.get(`/exams/search?${query}`);
+      return response.data.data;
+    } catch (error) {
+      if (import.meta.env.DEV && !error.response) {
+        return [];
+      }
+      throw error;
+    }
+  },
+
+  getExamDetails: async (examId) => {
+    try {
+      const response = await apiClient.get(`/exams/details/${examId}`);
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default examService;

@@ -7,10 +7,14 @@ import { loginSchema } from '../utils/validators';
 import { useAuth } from '../hooks/useAuth';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
+import { useGoogleLogin } from '@react-oauth/google';
+import { toast } from 'sonner';
+import clsx from 'clsx';
 
 export const Login = () => {
-  const { login, isLoading } = useAuth();
+  const { login, googleLogin, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const {
     register,
@@ -26,6 +30,28 @@ export const Login = () => {
 
   const onSubmit = (data) => {
     login(data.email, data.password);
+  };
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsGoogleLoading(true);
+      try {
+        await googleLogin(tokenResponse.access_token);
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      console.error('Google login failed');
+    }
+  });
+
+  const onGoogleClick = () => {
+    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID || import.meta.env.VITE_GOOGLE_CLIENT_ID === 'placeholder') {
+      toast.error('Google Client ID is missing. Please configure VITE_GOOGLE_CLIENT_ID in client/.env');
+      return;
+    }
+    handleGoogleLogin();
   };
 
   return (
@@ -100,18 +126,19 @@ export const Login = () => {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="flex items-center gap-2">
+      <div className="grid grid-cols-1 gap-3">
+        <Button 
+          type="button"
+          variant="outline" 
+          className="flex items-center justify-center gap-2"
+          onClick={onGoogleClick}
+          isLoading={isGoogleLoading}
+          disabled={isLoading || isGoogleLoading}
+        >
           <svg className="h-4 w-4 text-red-500 fill-current" viewBox="0 0 24 24">
             <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1c-6.075 0-11 4.925-11 11s4.925 11 11 11c6.34 0 10.55-4.46 10.55-10.715 0-.727-.08-1.282-.178-1.71H12.24z"/>
           </svg>
-          <span>Google</span>
-        </Button>
-        <Button variant="outline" className="flex items-center gap-2">
-          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.11.82-.26.82-.577v-2.234c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.82 1.102.82 2.222v3.293c0 .319.22.694.825.576C20.565 21.795 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
-          </svg>
-          <span>GitHub</span>
+          <span>Continue with Google</span>
         </Button>
       </div>
 

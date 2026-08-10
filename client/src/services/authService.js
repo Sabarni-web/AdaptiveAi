@@ -33,6 +33,19 @@ const authService = {
       throw error;
     }
   },
+  googleLogin: async (accessToken) => {
+    try {
+      const response = await apiClient.post('/auth/google', { accessToken });
+      const { user, tokens } = response.data.data;
+      return {
+        user,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
   register: async (userData) => {
     try {
       const response = await apiClient.post('/auth/register', userData);

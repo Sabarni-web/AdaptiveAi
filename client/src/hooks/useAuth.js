@@ -30,6 +30,20 @@ export const useAuth = () => {
     }
   };
 
+  const googleLogin = async (idToken) => {
+    dispatch(loginStart());
+    try {
+      const data = await authService.googleLogin(idToken);
+      dispatch(loginSuccess(data));
+      toast.success('Logged in with Google successfully!');
+      navigate('/dashboard');
+    } catch (error) {
+      const msg = error.response?.data?.error?.message || error.response?.data?.message || 'Google login failed';
+      dispatch(loginFailure(msg));
+      toast.error(msg);
+    }
+  };
+
   const register = async (userData) => {
     try {
       const data = await authService.register(userData);
@@ -54,6 +68,7 @@ export const useAuth = () => {
     isLoading,
     error,
     login,
+    googleLogin,
     register,
     logout,
   };
