@@ -24,6 +24,13 @@ export const Navbar = () => {
     navigate('/login');
   };
 
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && e.target.value.trim()) {
+      navigate(`/exams?search=${encodeURIComponent(e.target.value.trim())}`);
+      setShowSearch(false);
+    }
+  };
+
   const userMenuItems = [
     {
       label: 'Profile',
@@ -67,6 +74,7 @@ export const Navbar = () => {
         <input
           type="text"
           placeholder="Search exams, lessons, logs..."
+          onKeyDown={handleSearch}
           className={`w-full pl-10 pr-4 py-1.5 text-xs rounded-xl bg-transparent border border-hair outline-none focus:ring-2 transition-all ${theme === 'light' ? 'text-white placeholder-gray-400 focus:ring-white' : 'text-black placeholder-black focus:ring-black'}`}
         />
       </div>
@@ -116,6 +124,22 @@ export const Navbar = () => {
           items={userMenuItems}
         />
       </div>
+      
+      {/* Mobile Search Bar */}
+      {showSearch && (
+        <div className="absolute top-16 left-0 right-0 p-4 border-b border-hair z-40 md:hidden bg-inherit">
+          <div className="relative flex items-center">
+            <Search className={`absolute left-3 h-4.5 w-4.5 ${theme === 'light' ? 'text-white' : 'text-black'}`} />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Search exams, lessons, logs..."
+              onKeyDown={handleSearch}
+              className={`w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-transparent border border-hair outline-none focus:ring-2 transition-all ${theme === 'light' ? 'text-white placeholder-gray-400 focus:ring-white' : 'text-black placeholder-black focus:ring-black'}`}
+            />
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
