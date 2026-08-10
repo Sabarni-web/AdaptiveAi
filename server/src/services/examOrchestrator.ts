@@ -151,9 +151,9 @@ export class ExamOrchestrator {
           isCorrect = (selectedText === question.correctAnswer) || (answer === question.correctAnswer);
         } else {
           // Use AI to evaluate SAQ answers against the explanation/expected answer
-          // const aiResult = await aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || '');
-          isCorrect = true;
-          explanation = "Marked as correct automatically (Test Mode)";
+          const aiResult = await aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || '');
+          isCorrect = aiResult.isCorrect;
+          explanation = aiResult.explanation;
         }
         askedQuestion.isCorrect = isCorrect;
         askedQuestion.aiExplanation = explanation;
