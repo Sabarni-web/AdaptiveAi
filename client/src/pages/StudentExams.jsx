@@ -172,20 +172,7 @@ export const StudentExams = () => {
                 <p className="text-sm text-secondary truncate">{exam.subject}</p>
               </div>
 
-              <div className="flex flex-col gap-2 mt-2 bg-black/20 p-4 rounded-lg border border-hair text-sm">
-                <div className="flex justify-between">
-                  <span className="text-secondary">Questions:</span>
-                  <span className="font-semibold text-white">{exam.questionPool?.questionCount || exam.adaptiveSettings?.minQuestions || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-secondary">Duration:</span>
-                  <span className="font-semibold text-white">{(exam.timing?.duration || (exam.adaptiveSettings?.maxQuestions * 2)) || 'Adaptive'} mins</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-secondary">Difficulty:</span>
-                  <span className="font-semibold text-primary-500">Adaptive</span>
-                </div>
-              </div>
+
 
               <Button
                 className="w-full mt-2"

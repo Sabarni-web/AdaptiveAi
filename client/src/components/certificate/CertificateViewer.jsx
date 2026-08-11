@@ -40,24 +40,16 @@ export const CertificateViewer = ({ certificate, isPublic = false }) => {
         {/* Content Container - Glassmorphism */}
         <div className="absolute inset-8 bg-slate-900/40 backdrop-blur-sm border border-white/10 rounded flex flex-col p-10 z-10 text-center items-center justify-between">
           
-          <div className="flex flex-col items-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-amber-400 tracking-wider uppercase drop-shadow-md">
-              Certificate of Completion
-            </h1>
-            <div className="h-1 w-48 bg-amber-400 mt-4 mx-auto rounded-full"></div>
-          </div>
-
-          <div className="flex flex-col gap-2 my-auto">
-            <p className="text-slate-400 text-lg uppercase tracking-widest">This is to certify that</p>
-            <h2 className="text-4xl md:text-6xl font-script font-bold text-white my-4" style={{ fontFamily: 'Georgia, serif' }}>
+          <div className="flex flex-col gap-2 my-auto text-center items-center">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6" style={{ fontFamily: 'Georgia, serif' }}>
               {certificate.studentName}
-            </h2>
-            <p className="text-slate-400 text-lg uppercase tracking-widest">has successfully completed the assessment for</p>
-            <h3 className="text-2xl md:text-4xl font-bold text-sky-400 mt-4 uppercase">
+            </h1>
+            <p className="text-slate-400 text-sm md:text-base font-semibold uppercase tracking-widest">has successfully completed the assessment for</p>
+            <h2 className="text-3xl md:text-5xl font-bold text-sky-400 mt-4 uppercase tracking-wide">
               {certificate.examName}
-            </h3>
+            </h2>
             
-            <div className="flex justify-center gap-6 mt-6">
+            <div className="flex justify-center gap-6 mt-8">
               <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-lg backdrop-blur-md">
                 <p className="text-slate-400 text-xs uppercase mb-1">Score</p>
                 <p className="text-2xl font-bold text-white">{certificate.percentage.toFixed(2)}%</p>
@@ -103,7 +95,7 @@ export const CertificateViewer = ({ certificate, isPublic = false }) => {
       <div className="flex flex-wrap gap-4 justify-center mt-6">
         <button 
           onClick={handleDownloadPDF}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg shadow-indigo-900/20"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg shadow-blue-900/20"
         >
           <Download className="w-5 h-5" /> Download HD PDF
         </button>
@@ -111,7 +103,7 @@ export const CertificateViewer = ({ certificate, isPublic = false }) => {
           <>
             <button 
               onClick={() => handleShare('linkedin')}
-              className="flex items-center gap-2 bg-[#0077b5] hover:bg-[#005e93] text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg"
+              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg"
             >
               Share on LinkedIn
             </button>
@@ -123,7 +115,7 @@ export const CertificateViewer = ({ certificate, isPublic = false }) => {
             </button>
             <button 
               onClick={() => handleShare('copy')}
-              className="flex items-center gap-2 bg-surface-2 hover:bg-surface-3 text-primary border border-hair px-6 py-3 rounded-xl font-medium transition-colors shadow-lg"
+              className="flex items-center gap-2 bg-transparent hover:bg-white/5 text-white border border-white/30 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg"
             >
               <Link className="w-5 h-5" /> Copy Link
             </button>
@@ -157,7 +149,7 @@ export const CertificateViewer = ({ certificate, isPublic = false }) => {
             </div>
             <div className="bg-surface-2 p-4 rounded-xl border border-hair">
               <p className="text-sm text-secondary mb-1">AI Recommendation:</p>
-              <p className="text-primary font-medium">{certificate.learningRecommendation}</p>
+              <p className="text-primary font-medium">{certificate.learningRecommendation || 'Keep up the excellent work! Continue practicing to maintain your high scores and mastery of the subject.'}</p>
             </div>
           </div>
         </div>

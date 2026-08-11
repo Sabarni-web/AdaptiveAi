@@ -35,7 +35,7 @@ export const Sidebar = () => {
       case 'student':
         return [
           { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-          { label: 'My Exams', path: '/student/exams', icon: <GraduationCap className="h-5 w-5" /> },
+          { label: 'My Exams', path: '/exams', icon: <GraduationCap className="h-5 w-5" /> },
           { label: 'Results', path: '/student/results', icon: <CheckSquare className="h-5 w-5" /> },
           { label: 'Certificates', path: '/student/certificates', icon: <Award className="h-5 w-5" /> },
           { label: 'Analytics', path: '/analytics', icon: <TrendingUp className="h-5 w-5" /> },

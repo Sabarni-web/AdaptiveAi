@@ -148,7 +148,7 @@ export const StudentSelfImprovement = () => {
     return '#ef4444'; // Red / Needs Improvement
   };
 
-  const { strongestSkill, needsAttention, aiRecommendation } = data;
+  const { strongestSkill, needsAttention, recommendations } = data;
 
   return (
     <Card className="!p-6 border-t-4 border-t-mint flex flex-col gap-6">
@@ -161,68 +161,105 @@ export const StudentSelfImprovement = () => {
         </p>
       </div>
 
-      <div className="h-80 w-full mt-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={displayChartData}
-            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-            <XAxis 
-              dataKey="topic" 
-              stroke="#64748b" 
-              fontSize={12} 
-              tickLine={false} 
-              axisLine={false} 
-              tickMargin={10}
-              interval={0}
-              tick={{ width: 100, style: { wordWrap: 'break-word' } }}
-            />
-            <YAxis 
-              stroke="#64748b" 
-              fontSize={12} 
-              tickLine={false} 
-              axisLine={false} 
-              domain={[0, 100]}
-              tickFormatter={(value) => `${value}%`}
-            />
-            <Tooltip
-              cursor={{ fill: '#1e293b', opacity: 0.4 }}
-              content={<CustomTooltip />}
-            />
-            <Bar dataKey="currentScore" radius={[4, 4, 0, 0]} maxBarSize={60}>
-              {displayChartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getBarColor(entry.currentScore)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="h-80 w-full mt-4 overflow-x-auto overflow-y-hidden pb-2" style={{ scrollbarWidth: 'thin' }}>
+        <div style={{ minWidth: `${Math.max(displayChartData.length * 80, 600)}px`, height: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={displayChartData}
+              margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+              <XAxis 
+                dataKey="topic" 
+                stroke="#64748b" 
+                fontSize={12} 
+                tickLine={false} 
+                axisLine={false} 
+                tickMargin={10}
+                interval={0}
+                angle={90}
+                textAnchor="start"
+                height={120}
+              />
+              <YAxis 
+                stroke="#64748b" 
+                fontSize={12} 
+                tickLine={false} 
+                axisLine={false} 
+                domain={[0, 100]}
+                tickFormatter={(value) => `${value}%`}
+              />
+              <Tooltip
+                cursor={{ fill: '#1e293b', opacity: 0.4 }}
+                content={<CustomTooltip />}
+              />
+              <Bar dataKey="currentScore" radius={[4, 4, 0, 0]} maxBarSize={60} minPointSize={4}>
+                {displayChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry.currentScore)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 mt-2 flex flex-col gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-slate-800">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Strongest Area</span>
-            <span className="text-lg font-bold text-mint flex items-center">
-              {strongestSkill ? `${strongestSkill.topic} (${strongestSkill.currentScore}%)` : 'N/A'}
-              <TrendDisplay item={strongestSkill} />
-            </span>
-          </div>
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Focus Area</span>
-            <span className="text-lg font-bold text-amber-500 flex items-center">
-              {needsAttention ? `${needsAttention.topic} (${needsAttention.currentScore}%)` : 'N/A'}
-              <TrendDisplay item={needsAttention} />
-            </span>
-          </div>
-        </div>
+      <div className="mt-4 flex flex-col gap-4">
+        <h3 className="text-xl font-bold text-white mb-2">Areas for Improvement</h3>
         
-        <div>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Recommendation</span>
-          <p className="text-sm text-slate-300">
-            {aiRecommendation}
-          </p>
-        </div>
+        {recommendations && recommendations.length > 0 ? (
+          recommendations.map((rec, index) => {
+            const isHigh = rec.priority === 'HIGH';
+            const isMedium = rec.priority === 'MEDIUM';
+            const priorityIcon = isHigh ? '🔴' : isMedium ? '🟠' : '🟡';
+            const isDown = rec.trend === 'DOWN';
+            const isUp = rec.trend === 'UP';
+
+            return (
+              <div key={index} className="bg-slate-900/60 border border-slate-700/50 rounded-xl p-5 hover:border-slate-600 transition-colors">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                  <div>
+                    <h4 className="text-lg font-bold text-white flex items-center gap-2">
+                      <span>{priorityIcon}</span>
+                      {rec.subject} — {rec.topic}
+                    </h4>
+                    <div className="flex items-center gap-3 mt-1 text-sm">
+                      <span className="text-slate-400">Accuracy: <strong className="text-white">{rec.score}%</strong></span>
+                      {rec.change !== 0 && (
+                        <span className={`font-bold ${isDown ? 'text-red-400' : 'text-mint'}`}>
+                          {isDown ? '↓ ' : '↑ '}{Math.abs(rec.change)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-slate-800/40 rounded-lg p-4 mb-4 border border-slate-700/30">
+                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 block">AI Recommendation</span>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    {rec.recommendation}
+                  </p>
+                </div>
+
+                <div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-2 border-slate-600 text-slate-300 hover:text-white"
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    {rec.nextAction} <ArrowRight size={14} />
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8 text-center">
+            <span className="text-4xl mb-3 block">🎉</span>
+            <h4 className="text-lg font-bold text-white mb-2">You're doing great!</h4>
+            <p className="text-sm text-slate-400">Keep practicing to maintain your high scores.</p>
+          </div>
+        )}
       </div>
     </Card>
   );
