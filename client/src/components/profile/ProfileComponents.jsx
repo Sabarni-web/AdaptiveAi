@@ -38,13 +38,14 @@ export const ProfileHero = ({ user, stats }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 px-6 pb-6 border-t border-hair pt-6 mt-2">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-4 px-6 pb-6 border-t border-hair pt-6 mt-2">
         {[
           { label: 'Exams', value: stats.totalExams, icon: BookOpen },
           { label: 'Avg Score', value: `${stats.averageScore}%`, icon: Target },
           { label: 'Questions', value: stats.totalQuestions, icon: Brain },
           { label: 'Streak', value: `${stats.currentStreak} Days`, icon: Zap },
-          { label: 'Best Score', value: `${stats.bestScore}%`, icon: Award },
+          { label: 'Daily XP', value: stats.xp || 0, icon: Award },
+          { label: 'Challenges', value: stats.totalDailyChallenges || 0, icon: Target },
         ].map((stat, i) => (
           <div key={i} className="flex flex-col">
             <div className="flex items-center gap-1.5 text-secondary text-xs mb-1">

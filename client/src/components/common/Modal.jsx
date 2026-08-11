@@ -12,6 +12,7 @@ export const Modal = ({
   size = 'md',
   closeOnOverlayClick = true,
   showCloseButton = true,
+  className = '',
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -54,7 +55,8 @@ export const Modal = ({
       <div
         className={clsx(
           'relative w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-700 animate-slide-in flex flex-col',
-          sizes[size]
+          sizes[size],
+          className
         )}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700">

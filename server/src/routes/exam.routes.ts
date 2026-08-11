@@ -11,6 +11,8 @@ const router = Router();
 router.use(authMiddleware);
 router.use(rbac(['student']));
 
+router.get('/search', examController.searchExams);
+router.get('/details/:examId', examController.getExamDetails);
 router.post('/start', validateBody(startExamSchema), examController.startExam);
 router.get('/:sessionId/next-question', examController.getNextQuestion);
 router.post('/:sessionId/answer', rateLimiter('exam'), validateBody(answerSchema), examController.submitAnswer);

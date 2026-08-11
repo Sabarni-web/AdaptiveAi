@@ -1,39 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Play, BookOpen, Layers, Server } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, Filter, BookOpen } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
+import { Loader } from '../components/common/Loader';
 import { useExam } from '../hooks/useExam';
+import examService from '../services/examService';
 import apiClient from '../services/apiClient';
 import { toast } from 'sonner';
 
 export const StudentExams = () => {
-  const { startExam, isLoading } = useExam();
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const searchQuery = searchParams.get('search')?.toLowerCase() || '';
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { startExam, isLoading: startingExam } = useExam();
+
+  const searchQuery = searchParams.get('search') || '';
+  const domainQuery = searchParams.get('domain') || '';
+  const subjectQuery = searchParams.get('subject') || '';
+
+  const [exams, setExams] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filter options loaded from API
   const [domains, setDomains] = useState([]);
-  const [selectedDomain, setSelectedDomain] = useState('');
-  
   const [subjects, setSubjects] = useState([]);
-  const [selectedSubject, setSelectedSubject] = useState(null);
 
   useEffect(() => {
-    fetchDomains();
+    fetchFilterOptions();
   }, []);
 
   useEffect(() => {
-    if (selectedDomain) {
-      fetchSubjects(selectedDomain);
-    } else {
-      setSubjects([]);
-      setSelectedSubject(null);
-    }
-  }, [selectedDomain]);
+    fetchExams();
+  }, [searchQuery, domainQuery, subjectQuery]);
 
-  const fetchDomains = async () => {
+  useEffect(() => {
+    fetchSubjects(domainQuery);
+  }, [domainQuery]);
+
+  const fetchFilterOptions = async () => {
     try {
       const res = await apiClient.get('/question-bank/domains');
       setDomains(res.data.data);
@@ -44,126 +49,140 @@ export const StudentExams = () => {
 
   const fetchSubjects = async (domainName) => {
     try {
-      const res = await apiClient.get(`/question-bank/subjects?domain=${encodeURIComponent(domainName)}`);
+      const url = domainName 
+        ? `/question-bank/subjects?domain=${encodeURIComponent(domainName)}`
+        : `/question-bank/subjects`;
+      const res = await apiClient.get(url);
       setSubjects(res.data.data);
-      setSelectedSubject(null);
     } catch (err) {
       toast.error('Failed to load subjects');
     }
   };
 
-  const handleStartExam = (subject) => {
-    if (!selectedDomain || !subject) {
-      toast.error('Please select a domain and subject first');
-      return;
+  const fetchExams = async () => {
+    setLoading(true);
+    try {
+      const data = await examService.searchExams({
+        search: searchQuery,
+        domain: domainQuery,
+        subject: subjectQuery
+      });
+      setExams(data || []);
+    } catch (err) {
+      toast.error('Failed to search exams');
+    } finally {
+      setLoading(false);
     }
-    
-    const available = (subject.mcqCount || 0) + (subject.saqCount || 0);
-    
-    if (available === 0) {
-      toast.error(`No questions available for this subject.`);
-      return;
+  };
+
+  const updateSearch = (key, value) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set(key, value);
+      // Reset subject if domain changes
+      if (key === 'domain') newParams.delete('subject');
+    } else {
+      newParams.delete(key);
+      if (key === 'domain') newParams.delete('subject');
     }
+    setSearchParams(newParams);
+  };
 
-    const numQ = Math.min(10, available); // default to 10 or max available
-
+  const handleStartExam = (exam) => {
+    const requestedQ = exam.questionPool?.questionCount || exam.adaptiveSettings?.maxQuestions || 10;
+    const numQ = Math.min(requestedQ, 10);
+    const trueSubject = exam.questionPool?.chapters?.[0] || exam.title;
+    
     startExam({
-      domain: selectedDomain,
-      subject: subject.name,
+      domain: exam.subject,
+      subject: trueSubject,
       questionType: 'Mixed',
       numberOfQuestions: numQ
     });
   };
 
-  const filteredDomains = domains.filter(domain => domain.name.toLowerCase().includes(searchQuery));
-  const filteredSubjects = subjects.filter(subject => subject.name.toLowerCase().includes(searchQuery));
-
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       <PageHeader
-        title="Question Bank Evaluations"
-        description="Select a domain and subject to generate a customized test."
+        title="Search Exams"
+        description="Find and start adaptive evaluations matching your criteria."
       />
 
-      {!selectedDomain ? (
-        <div className="flex flex-col gap-4">
-          {searchQuery && (
-            <div className="text-sm text-secondary">
-              Showing results for: <span className="text-primary-500 font-bold">"{searchQuery}"</span>
-            </div>
-          )}
-          {filteredDomains.length === 0 ? (
-            <div className="text-center text-secondary mt-10">No domains found matching your search.</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredDomains.map((domain, idx) => (
-                <Card
-                  key={domain.name}
-                  className="card animate-in flex flex-col justify-between gap-6 !p-8 cursor-pointer hover:border-primary-500 transition-colors"
-                  style={{ animationDelay: `${idx * 80}ms` }}
-                  clickable
-                  onClick={() => setSelectedDomain(domain.name)}
-                >
-                  <div className="flex flex-col gap-2">
-                    <span className="bg-primary-500/10 text-primary-500 border border-primary-500/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider w-fit">
-                      Domain
-                    </span>
-                    <h2 className="text-xl md:text-2xl font-black leading-tight mt-1">
-                      {domain.name}
-                    </h2>
-                    <p className="text-sm text-secondary font-medium">
-                      {domain.subjectCount} Subjects Available
-                    </p>
-                  </div>
-                  <div className="flex items-center text-primary-500 font-semibold text-sm">
-                    View Subjects &rarr;
-                  </div>
-                </Card>
+      {/* Filters */}
+      <Card className="!p-6 flex flex-col md:flex-row gap-4 items-center">
+        <div className="flex w-full md:w-auto gap-4">
+          <div className="relative flex-1 md:w-64">
+            <select
+              value={domainQuery}
+              onChange={(e) => updateSearch('domain', e.target.value)}
+              className="w-full appearance-none pl-4 pr-10 py-2.5 rounded-lg bg-black/20 border border-hair text-white outline-none focus:border-primary-500 transition-colors"
+            >
+              <option value="">All Domains</option>
+              {domains.map((d) => (
+                <option key={d.name} value={d.name}>{d.name}</option>
               ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          <Button variant="outline" className="w-fit mb-4" onClick={() => setSelectedDomain('')}>
-            &larr; Back to Domains
-          </Button>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-bold">Select Subject for {selectedDomain}</h2>
-            {searchQuery && (
-              <span className="text-sm text-secondary">
-                Filtered by: <span className="text-primary-500 font-bold">"{searchQuery}"</span>
-              </span>
-            )}
+            </select>
+            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary pointer-events-none" />
           </div>
-          {filteredSubjects.length === 0 ? (
-            <div className="text-center text-secondary mt-10">No subjects found matching your search.</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredSubjects.map((sub, idx) => (
-                <Card
-                  key={sub.name}
-                  className="card animate-in flex flex-col justify-between gap-6 !p-8 cursor-pointer hover:border-primary-500 transition-colors"
-                  style={{ animationDelay: `${idx * 80}ms` }}
-                  clickable
-                  onClick={() => handleStartExam(sub)}
-                >
-                  <div className="flex flex-col gap-2">
-                    <span className="bg-accent/10 text-accent-500 border border-accent-500/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider w-fit">
-                      Subject
-                    </span>
-                    <h2 className="text-xl font-black leading-tight mt-1">
-                      {sub.name}
-                    </h2>
-                    <div className="flex gap-4 mt-2">
-                      <span className="text-sm text-secondary font-medium">MCQ: {sub.mcqCount}</span>
-                      <span className="text-sm text-secondary font-medium">SAQ: {sub.saqCount}</span>
-                    </div>
-                  </div>
-                </Card>
+
+          <div className="relative flex-1 md:w-64">
+            <select
+              value={subjectQuery}
+              onChange={(e) => updateSearch('subject', e.target.value)}
+              className="w-full appearance-none pl-4 pr-10 py-2.5 rounded-lg bg-black/20 border border-hair text-white outline-none focus:border-primary-500 transition-colors"
+            >
+              <option value="">All Subjects</option>
+              {subjects.map((s) => (
+                <option key={s.name} value={s.name}>{s.name}</option>
               ))}
-            </div>
-          )}
+            </select>
+            <BookOpen className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary pointer-events-none" />
+          </div>
+        </div>
+      </Card>
+
+      {/* Results */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader size="lg" text="Searching exams..." />
+        </div>
+      ) : exams.length === 0 ? (
+        <Card className="!p-12 flex flex-col items-center text-center">
+          <div className="bg-primary-500/10 p-4 rounded-full mb-4">
+            <Search className="h-8 w-8 text-primary-500" />
+          </div>
+          <h3 className="text-xl font-bold mb-2">No exams found</h3>
+          <p className="text-secondary max-w-md">
+            Try another domain or subject, or broaden your search criteria.
+          </p>
+          <Button variant="outline" className="mt-6" onClick={() => setSearchParams(new URLSearchParams())}>
+            Clear Filters
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {exams.map((exam, idx) => (
+            <Card
+              key={exam._id}
+              className="flex flex-col gap-4 !p-6 hover:border-primary-500 transition-colors"
+              style={{ animationDelay: `${idx * 50}ms` }}
+            >
+              <div>
+                <h3 className="text-xl font-bold mb-1 truncate" title={exam.title}>{exam.title}</h3>
+                <p className="text-sm text-secondary truncate">{exam.subject}</p>
+              </div>
+
+
+
+              <Button
+                className="w-full mt-2"
+                onClick={() => handleStartExam(exam)}
+                disabled={startingExam}
+              >
+                {startingExam ? 'Initializing...' : 'Start Exam'}
+              </Button>
+            </Card>
+          ))}
         </div>
       )}
     </div>

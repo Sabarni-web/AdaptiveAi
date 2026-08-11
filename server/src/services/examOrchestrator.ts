@@ -151,9 +151,9 @@ export class ExamOrchestrator {
           isCorrect = (selectedText === question.correctAnswer) || (answer === question.correctAnswer);
         } else {
           // Use AI to evaluate SAQ answers against the explanation/expected answer
-          // const aiResult = await aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || '');
-          isCorrect = true;
-          explanation = "Marked as correct automatically (Test Mode)";
+          const aiResult = await aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || '');
+          isCorrect = aiResult.isCorrect;
+          explanation = aiResult.explanation;
         }
         askedQuestion.isCorrect = isCorrect;
         askedQuestion.aiExplanation = explanation;
@@ -226,8 +226,8 @@ export class ExamOrchestrator {
         examId: session._id.toString(),
         studentName: user ? (user.name || 'Student') : 'Anonymous Student',
         studentEmail: user ? user.email : 'student@adaptiveai.com',
-        examName: session.subject + ' Evaluation',
-        subject: session.subject,
+        examName: (session.subject ? session.subject + ' Evaluation' : 'Full Stack Engineering Evaluation'),
+        subject: session.subject || 'Full Stack Engineering',
         totalQuestions: totalQuestions,
         correctAnswers: correctCount,
         wrongAnswers: totalQuestions - correctCount,

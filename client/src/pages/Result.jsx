@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import examService from '../services/examService';
 import { ResultSummary } from '../components/result/ResultSummary';
 import { ScoreBreakdown } from '../components/result/ScoreBreakdown';
@@ -19,6 +20,7 @@ import html2pdf from 'html2pdf.js';
 export const Result = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
 
   const [showCert, setShowCert] = useState(false);
 
@@ -106,18 +108,14 @@ export const Result = () => {
       <Modal
         isOpen={showCert}
         onClose={() => setShowCert(false)}
-        title="Completion Certificate"
-        description="Verify your accomplishment details."
+        title={<span className="text-white">Completion Certificate</span>}
+        description={<span className="text-slate-400">Verify your accomplishment details.</span>}
         size="xl"
-        footer={
-          <Button variant="primary" onClick={() => window.print()}>
-            Print Certificate
-          </Button>
-        }
+        className="!bg-black !border-slate-800"
       >
         <div className="py-4">
           <CertificatePreview
-            studentName="STUDENT CANDIDATE"
+            studentName={user?.name || user?.email || user?.id || 'Student Candidate'}
             examTitle={result.examTitle}
             score={result.score.percentage}
             grade={result.grade}

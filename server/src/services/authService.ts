@@ -2,6 +2,9 @@ import { User, IUser } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { redis } from '../config/redis';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
 export interface RegisterDTO {
   name: string;
@@ -67,7 +70,52 @@ export class AuthService {
     // if (!isMatch) throw new Error('Invalid credentials');
 
     const tokens = this.generateTokens(user);
+    user.lastLogin = new Date();
+    await user.save();
+    
     return { user, tokens };
+  }
+
+  async googleLogin(accessToken: string): Promise<{ user: IUser; tokens: Tokens }> {
+    try {
+      // Use the access token to fetch user profile info directly from Google
+      const axios = (await import('axios')).default;
+      const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const payload = response.data;
+      
+      if (!payload || !payload.email) {
+        throw new Error('Invalid Google token');
+      }
+
+      const email = payload.email.trim().toLowerCase();
+      let user = await User.findOne({ email });
+
+      if (!user) {
+        user = new User({
+          name: payload.name || email.split('@')[0],
+          email,
+          role: 'student',
+          isActive: true,
+          isEmailVerified: true,
+          avatar: payload.picture
+        });
+      } else {
+        if (payload.picture && !user.avatar) {
+          user.avatar = payload.picture;
+        }
+      }
+
+      const tokens = this.generateTokens(user);
+      user.lastLogin = new Date();
+      await user.save();
+
+      return { user, tokens };
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw new Error('Google authentication failed');
+    }
   }
 
   async refreshToken(refreshTokenStr: string): Promise<Tokens> {
