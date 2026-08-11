@@ -21,7 +21,8 @@ export const generateCertificatePDF = async (certificate: ICertificate): Promise
       });
 
       // Background Gradient/Color
-      doc.rect(0, 0, doc.page.width, doc.page.height).fill('#0f172a'); // Slate 900
+      doc.rect(0, 0, doc.page.width, doc.page.height).fill('#000000'); // Black outer margin
+      doc.rect(20, 20, doc.page.width - 40, doc.page.height - 40).fill('#0f172a'); // Deep Blue inner certificate
 
       // Gold Border
       doc.rect(20, 20, doc.page.width - 40, doc.page.height - 40)

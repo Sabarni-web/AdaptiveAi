@@ -117,10 +117,10 @@ export const Exam = () => {
   };
 
   const getQuestionTimeLimit = (question) => {
-    if (!question) return 10;
-    if (question.type === 'MCQ') return 10;
+    if (!question) return 20;
+    if (question.type === 'MCQ') return 20;
     if (question.type === 'SAQ' || question.type === 'Descriptive' || question.type === 'DESCRIPTIVE') return 180;
-    return 10; // Default fallback
+    return 20; // Default fallback
   };
 
   const handleFinalSubmit = async () => {
