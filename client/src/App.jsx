@@ -16,6 +16,7 @@ import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
+import { DailyChallengePage } from './pages/DailyChallengePage';
 import { Exam } from './pages/Exam';
 import { Result } from './pages/Result';
 import { Settings } from './pages/Settings';
@@ -82,6 +83,7 @@ export const App = () => {
         {/* Protected Dashboard & Core Routes */}
         <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/daily-challenge" element={<DailyChallengePage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/analytics" element={<AnalyticsPage />} />

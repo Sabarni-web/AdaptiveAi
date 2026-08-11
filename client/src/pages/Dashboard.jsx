@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { GraduationCap, Award, Play, BookOpen } from 'lucide-react';
+import { GraduationCap, Award, Play, BookOpen, Flame } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card } from '../components/common/Card';
 import { DataTable } from '../components/common/DataTable';
@@ -12,7 +12,9 @@ import { TeacherDashboard } from './TeacherDashboard';
 import { AdminDashboard } from './AdminDashboard';
 import examService from '../services/examService';
 import { RecommendationCard } from '../components/dashboard/RecommendationCard';
+import { DailyChallengeCard } from '../components/dashboard/DailyChallengeCard';
 import { FloatingTutor } from '../components/tutor/FloatingTutor';
+import apiClient from '../services/apiClient';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -27,6 +29,17 @@ export const Dashboard = () => {
     queryFn: examService.getHistory,
     enabled: role === 'student',
   });
+
+  const { data: challengeData } = useQuery({
+    queryKey: ['dailyChallengeToday'],
+    queryFn: async () => {
+      const res = await apiClient.get('/daily-challenge/today');
+      return res.data;
+    },
+    enabled: role === 'student',
+  });
+  
+  const currentStreak = challengeData?.currentStreak || 0;
 
   if (role === 'teacher') {
     return <TeacherDashboard />;
@@ -79,11 +92,24 @@ export const Dashboard = () => {
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       <PageHeader
-        title={`Welcome back, ${user?.name || 'Student'}`}
+        title={
+          <div className="flex items-center gap-3">
+            <span>Welcome back, {user?.name || 'Student'}</span>
+            {currentStreak > 0 && (
+              <div className="flex items-center gap-1.5 text-orange-400 text-sm md:text-lg bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
+                <Flame className="w-5 h-5 md:w-6 md:h-6 fill-orange-400" />
+                <span>{currentStreak} Day Streak</span>
+              </div>
+            )}
+          </div>
+        }
         description="Select an available evaluation test to start or view past performance certificates."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Daily Challenge Card */}
+        <DailyChallengeCard />
+
         {/* AI Recommendation Center */}
         <RecommendationCard />
 

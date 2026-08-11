@@ -127,9 +127,12 @@ export const getIntelligenceProfile = async (req: Request, res: Response): Promi
           totalExams,
           averageScore,
           totalQuestions,
-          currentStreak,
+          currentStreak: user.gamification?.currentStreak || currentStreak, // Prefer gamification streak
           bestScore,
-          certificates: 0 // Mock for now
+          certificates: 0, // Mock for now
+          xp: user.gamification?.xp || 0,
+          longestStreak: user.gamification?.longestStreak || 0,
+          totalDailyChallenges: user.gamification?.totalChallengesCompleted || 0
         },
         domains,
         strengths,
