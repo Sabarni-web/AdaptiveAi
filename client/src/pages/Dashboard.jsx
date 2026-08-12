@@ -15,6 +15,9 @@ import { RecommendationCard } from '../components/dashboard/RecommendationCard';
 import { DailyChallengeCard } from '../components/dashboard/DailyChallengeCard';
 import { FloatingTutor } from '../components/tutor/FloatingTutor';
 import apiClient from '../services/apiClient';
+import { StudyPlanCard } from '../components/dashboard/StudyPlanCard';
+import { PerformanceTrendContent } from '../components/dashboard/PerformanceTrendCard';
+import { AiBrainVisualization } from '../components/dashboard/AiBrainVisualization';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -106,30 +109,44 @@ export const Dashboard = () => {
         description="Select an available evaluation test to start or view past performance certificates."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Daily Challenge Card */}
+      {/* TOP ROW: Daily Challenge & AI Brain Visualization */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_0.65fr] gap-8 items-stretch">
         <DailyChallengeCard />
+        <AiBrainVisualization />
+      </div>
 
-        {/* AI Recommendation Center */}
+      {/* SECOND ROW: AI Recommendation */}
+      <div className="grid grid-cols-1 gap-8">
         <RecommendationCard />
+      </div>
 
-        {/* Quick Stats Widget */}
-        <Card title="Quick Stats" description="Your aggregate progress.">
-          <div className="flex flex-col gap-4 mt-2">
-            <div className="flex items-center justify-between pb-3 border-b border-hair">
-              <span className="text-sm font-bold text-primary">Exams Completed</span>
-              <span className="adaptive-ring"><span className="text-lg font-black text-primary relative z-10">{history.length}</span></span>
+      {/* SECOND ROW: Quick Stats (Left) | Study Plan + Trend (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* LEFT: Quick Stats */}
+        <div className="lg:col-span-1">
+          <Card title="Quick Stats" description="Your aggregate progress." className="h-full">
+            <div className="flex flex-col gap-4 mt-2">
+              <div className="flex items-center justify-between pb-3 border-b border-hair">
+                <span className="text-sm font-bold text-primary">Exams Completed</span>
+                <span className="adaptive-ring"><span className="text-lg font-black text-primary relative z-10">{history.length}</span></span>
+              </div>
+              <div className="flex items-center justify-between pb-3 border-b border-hair">
+                <span className="text-sm font-bold text-primary">Average Grade</span>
+                <span className="adaptive-ring"><span className="text-lg font-black text-primary relative z-10">{getAverageGrade()}</span></span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-primary">System Standing</span>
+                <span className="text-sm font-bold text-green-500">Active</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between pb-3 border-b border-hair">
-              <span className="text-sm font-bold text-primary">Average Grade</span>
-              <span className="adaptive-ring"><span className="text-lg font-black text-primary relative z-10">{getAverageGrade()}</span></span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-primary">System Standing</span>
-              <span className="text-sm font-bold text-green-500">Active</span>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
+
+        {/* RIGHT: New Content Area */}
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <StudyPlanCard />
+          <PerformanceTrendContent history={history} />
+        </div>
       </div>
 
       {/* History Table */}

@@ -34,6 +34,7 @@ export const Exam = () => {
     submitAnswer,
     flagQuestion,
     finishExam,
+    status,
   } = useExam();
 
   const socket = useSocket(sessionId);
@@ -51,29 +52,42 @@ export const Exam = () => {
     loadNextQuestion(sessionId);
   }, [sessionId]);
 
-  // Anti-Cheating tab focus detection
+  // Exam Navigation Protection and Tab Switch/Focus Loss Auto-Submit
   useEffect(() => {
-    const handleVisibility = () => {
-      const isFocused = !document.hidden;
-      socket.emitFocusChange(sessionId, isFocused);
-      if (!isFocused) {
-        if (import.meta.env.DEV) {
-          console.warn('Development: Leaving the exam tab (Compliance event suppressed)');
-        } else {
-          toast.warning('Warning: Leaving the exam tab is recorded as a compliance event!');
-        }
+    const isExamActive = status !== 'idle' && status !== 'completed';
+    if (!isExamActive) return;
+
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    const handleViolation = async (reason) => {
+      toast.error(`${reason} Exam has been automatically submitted.`);
+      await finishExam(sessionId);
+      exit();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleViolation('Tab switch detected!');
       }
     };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [sessionId, socket]);
 
-  // Disable Right-Click context menus
-  useEffect(() => {
-    const disableRightClick = (e) => e.preventDefault();
-    document.addEventListener('contextmenu', disableRightClick);
-    return () => document.removeEventListener('contextmenu', disableRightClick);
-  }, []);
+    const handleBlur = () => {
+      handleViolation('Window focus lost (another app or tab opened)!');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [status, sessionId, finishExam, exit]);
 
   // Update local answer state when question shifts
   useEffect(() => {
@@ -154,6 +168,11 @@ export const Exam = () => {
               <span className="bg-primary-900/50 text-primary-300 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-primary-800">
                 {currentQuestion.difficulty || 'Adaptive'}
               </span>
+              {status !== 'idle' && status !== 'completed' && (
+                <span className="bg-red-900/50 text-red-300 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-red-800 flex items-center gap-1">
+                  🔒 Secure Exam Mode
+                </span>
+              )}
               <AutoSaveIndicator status={saveStatus} />
             </div>
           </div>

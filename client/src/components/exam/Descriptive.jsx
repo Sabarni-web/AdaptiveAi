@@ -17,13 +17,8 @@ export const Descriptive = ({
   const wordCount = getWordCount(value);
   const charCount = value.length;
 
-  const handlePaste = (e) => {
+  const blockEvent = (e) => {
     e.preventDefault();
-    const text = e.clipboardData.getData('text/plain');
-    const newValue = value + text;
-    if (newValue.length <= maxLength) {
-      onChange(newValue);
-    }
   };
 
   return (
@@ -32,7 +27,12 @@ export const Descriptive = ({
         disabled={disabled}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onPaste={handlePaste}
+        onPaste={blockEvent}
+        onCopy={blockEvent}
+        onCut={blockEvent}
+        onDragOver={blockEvent}
+        onDrop={blockEvent}
+        onContextMenu={blockEvent}
         placeholder={placeholder}
         maxLength={maxLength}
         rows={10}
@@ -58,9 +58,6 @@ export const Descriptive = ({
             Characters: {charCount} / {maxLength}
           </span>
         </div>
-        <span className="text-[10px] text-slate-500 uppercase tracking-wider">
-          Paste plain text only
-        </span>
       </div>
     </div>
   );

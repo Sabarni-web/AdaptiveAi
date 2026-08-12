@@ -64,11 +64,11 @@ export const AnswerReview = ({ answers = [] }) => {
               {q.options?.map((opt, i) => {
                 if (!opt) return null;
                 const optLabel = opt.label || opt.key || String.fromCharCode(65 + i);
-                const isSelected = ans.studentAnswer === optLabel;
-                const isCorrect = (q.correctOption || q.correctAnswer) === optLabel;
+                const isSelected = ans.studentAnswer === optLabel || ans.studentAnswer === opt.text;
+                const isCorrect = (q.correctOption || q.correctAnswer || ans.correctAnswer) === optLabel || (ans.correctAnswer) === opt.text;
                 let cardStyle = 'border-slate-200 dark:border-slate-800';
-                if (isSelected) cardStyle = 'border-red-500 bg-red-50/10 dark:bg-red-950/10';
-                if (isCorrect) cardStyle = 'border-green-500 bg-green-50/10 dark:bg-green-950/10';
+                if (isSelected) cardStyle = 'border-red-500 bg-red-50/10 dark:bg-red-950/10 text-red-500 font-medium';
+                if (isCorrect) cardStyle = 'border-green-500 bg-green-50/10 dark:bg-green-950/10 text-green-500 font-medium';
 
                 return (
                   <div
