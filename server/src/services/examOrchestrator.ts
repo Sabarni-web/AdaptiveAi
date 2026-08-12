@@ -150,6 +150,9 @@ export class ExamOrchestrator {
           const selectedText = selectedOption ? selectedOption.key : answer;
           isCorrect = (selectedText === question.correctAnswer) || (answer === question.correctAnswer);
         } else {
+          // For SAQs, the correct answer to show should be the expected explanation or answer, not "Option A"
+          correctAnswer = question.answerExplanation || question.correctAnswer || '';
+          
           // Use AI to evaluate SAQ answers against the explanation/expected answer
           const [aiResult, aiDetected] = await Promise.all([
             aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || ''),
