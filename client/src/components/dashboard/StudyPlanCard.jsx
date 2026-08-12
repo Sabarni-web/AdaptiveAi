@@ -74,6 +74,31 @@ export const StudyPlanCard = () => {
   const { plan } = planData;
   const progressPercent = plan.totalMinutes > 0 ? Math.round((plan.completedMinutes / plan.totalMinutes) * 100) : 0;
 
+  const priorityWeight = { high: 3, medium: 2, low: 1, HIGH: 3, MEDIUM: 2, LOW: 1 };
+  
+  const getTaskPriority = (task) => {
+    if (task.priority) return task.priority;
+    if (task.durationMinutes >= 10) return 'high';
+    if (task.durationMinutes >= 7) return 'medium';
+    return 'low';
+  };
+
+  const sortedTasks = [...plan.tasks].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    const pA = priorityWeight[getTaskPriority(a).toLowerCase()] || 0;
+    const pB = priorityWeight[getTaskPriority(b).toLowerCase()] || 0;
+    return pB - pA;
+  });
+
+  const getPriorityBadge = (task) => {
+    if (task.completed) return null;
+    const p = getTaskPriority(task).toLowerCase();
+    if (p === 'high') return <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider shrink-0 ml-2">High</span>;
+    if (p === 'medium') return <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider shrink-0 ml-2">Medium</span>;
+    if (p === 'low') return <span className="bg-green-500/20 text-green-400 border border-green-500/30 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider shrink-0 ml-2">Low</span>;
+    return null;
+  };
+
   return (
     <>
       <Card 
@@ -91,16 +116,12 @@ export const StudyPlanCard = () => {
           </div>
           
           <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
-            {plan.tasks.map((task, index) => (
+            {sortedTasks.map((task, index) => (
               <div key={index} className="flex items-center justify-between group cursor-pointer hover:bg-surface/50 p-2 -mx-2 rounded transition-colors" onClick={() => setIsModalOpen(true)}>
                 <div className="flex items-center gap-3 truncate mr-2">
-                  {task.completed ? (
-                    <CheckSquare className="h-5 w-5 text-primary shrink-0" />
-                  ) : (
-                    <Square className="h-5 w-5 text-text-secondary group-hover:text-primary transition-colors shrink-0" />
-                  )}
-                  <span className={`text-sm font-medium truncate ${task.completed ? 'text-text-secondary line-through opacity-70' : 'text-text-primary'}`}>
+                  <span className={`text-sm font-medium truncate flex items-center ${task.completed ? 'text-text-secondary line-through opacity-70' : 'text-text-primary'}`}>
                     {task.title}
+                    {getPriorityBadge(task)}
                   </span>
                 </div>
                 <span className="text-xs text-text-secondary whitespace-nowrap">{task.durationMinutes} min</span>

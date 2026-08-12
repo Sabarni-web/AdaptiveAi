@@ -77,11 +77,6 @@ export const AiLearningSettings = ({ register, watch, setValue }) => (
         options={[{ value: 'Beginner', label: 'Beginner' }, { value: 'Balanced', label: 'Balanced' }, { value: 'Detailed', label: 'Detailed' }]}
         {...register('ai.explanationStyle')}
       />
-      <Select
-        label="Preferred AI Language"
-        options={[{ value: 'English', label: 'English' }, { value: 'Bengali', label: 'Bengali' }, { value: 'Hindi', label: 'Hindi' }]}
-        {...register('ai.language')}
-      />
       <Switch 
         label="AI Recommendations" 
         checked={watch('ai.recommendationsEnabled')} 
@@ -135,11 +130,6 @@ export const StudySettings = ({ register, watch, setValue }) => (
           { value: '90 minutes', label: '90 minutes' }
         ]}
         {...register('study.dailyStudyGoal')}
-      />
-      <Select
-        label="Preferred Exam Language"
-        options={[{ value: 'English', label: 'English' }, { value: 'Bengali', label: 'Bengali' }, { value: 'Hindi', label: 'Hindi' }]}
-        {...register('study.preferredLanguage')}
       />
     </div>
   </Card>

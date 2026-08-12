@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle2, Loader2, Play } from 'lucide-react';
 import { Button } from '../common/Button';
+import { Descriptive } from '../exam/Descriptive';
 import { studyPlanService } from '../../services/studyPlanService';
 
 export const StudyTaskRunner = ({ planId, task, onFinish, onBack }) => {
@@ -109,7 +110,8 @@ export const StudyTaskRunner = ({ planId, task, onFinish, onBack }) => {
   }
 
   const currentQ = questions[currentIndex];
-  const isCorrect = selectedAnswer === currentQ.correctAnswer;
+  const isDescriptive = currentQ.type !== 'MCQ' && (!currentQ.options || currentQ.options.length === 0);
+  const isCorrect = isDescriptive ? true : selectedAnswer === currentQ.correctAnswer;
 
   return (
     <div className="flex flex-col h-full max-h-[80vh]">
@@ -145,41 +147,50 @@ export const StudyTaskRunner = ({ planId, task, onFinish, onBack }) => {
           </h3>
 
           <div className="space-y-3">
-            {currentQ.options.map((opt) => {
-              const isSelected = selectedAnswer === opt.key;
-              let btnClass = "w-full text-left p-4 rounded-xl border border-hair hover:border-primary/50 hover:bg-surface-lighter transition-all flex items-center gap-3";
-              
-              if (isSelected) btnClass += " bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]";
-              
-              if (isAnswered) {
-                if (opt.key === currentQ.correctAnswer) {
-                  btnClass = "w-full text-left p-4 rounded-xl border border-green-500 bg-green-500/10 flex items-center gap-3 text-green-400";
-                } else if (isSelected && opt.key !== currentQ.correctAnswer) {
-                  btnClass = "w-full text-left p-4 rounded-xl border border-red-500 bg-red-500/10 flex items-center gap-3 text-red-400 opacity-70";
-                } else {
-                  btnClass = "w-full text-left p-4 rounded-xl border border-hair opacity-40 flex items-center gap-3";
+            {isDescriptive ? (
+              <Descriptive 
+                value={selectedAnswer || ''} 
+                onChange={(val) => handleSelectAnswer(val)} 
+                disabled={isAnswered}
+                placeholder="Type your comprehensive response here..."
+              />
+            ) : (
+              currentQ.options?.map((opt) => {
+                const isSelected = selectedAnswer === opt.key;
+                let btnClass = "w-full text-left p-4 rounded-xl border border-hair hover:border-primary/50 hover:bg-surface-lighter transition-all flex items-center gap-3";
+                
+                if (isSelected) btnClass += " bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]";
+                
+                if (isAnswered) {
+                  if (opt.key === currentQ.correctAnswer) {
+                    btnClass = "w-full text-left p-4 rounded-xl border border-green-500 bg-green-500/10 flex items-center gap-3 text-green-400";
+                  } else if (isSelected && opt.key !== currentQ.correctAnswer) {
+                    btnClass = "w-full text-left p-4 rounded-xl border border-red-500 bg-red-500/10 flex items-center gap-3 text-red-400 opacity-70";
+                  } else {
+                    btnClass = "w-full text-left p-4 rounded-xl border border-hair opacity-40 flex items-center gap-3";
+                  }
                 }
-              }
 
-              return (
-                <button
-                  key={opt.key}
-                  onClick={() => handleSelectAnswer(opt.key)}
-                  disabled={isAnswered}
-                  className={btnClass}
-                >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
-                    isSelected ? 'bg-primary text-background' : 
-                    (isAnswered && opt.key === currentQ.correctAnswer) ? 'bg-green-500 text-white' :
-                    (isAnswered && isSelected) ? 'bg-red-500 text-white' :
-                    'bg-surface-lighter text-text-secondary border border-hair'
-                  }`}>
-                    {opt.key}
-                  </div>
-                  <span className="flex-1 leading-relaxed text-sm">{opt.text}</span>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={opt.key}
+                    onClick={() => handleSelectAnswer(opt.key)}
+                    disabled={isAnswered}
+                    className={btnClass}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
+                      isSelected ? 'bg-primary text-background' : 
+                      (isAnswered && opt.key === currentQ.correctAnswer) ? 'bg-green-500 text-white' :
+                      (isAnswered && isSelected) ? 'bg-red-500 text-white' :
+                      'bg-surface-lighter text-text-secondary border border-hair'
+                    }`}>
+                      {opt.key}
+                    </div>
+                    <span className="flex-1 leading-relaxed text-sm">{opt.text}</span>
+                  </button>
+                );
+              })
+            )}
           </div>
 
           {isAnswered && currentQ.answerExplanation && (
@@ -196,8 +207,8 @@ export const StudyTaskRunner = ({ planId, task, onFinish, onBack }) => {
         <div className="max-w-3xl mx-auto flex justify-between items-center">
           <div>
              {isAnswered && (
-                <span className={`font-bold ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
-                  {isCorrect ? 'Correct!' : 'Incorrect'}
+                <span className={`font-bold ${isDescriptive ? 'text-blue-500' : isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                  {isDescriptive ? 'Answer Submitted' : isCorrect ? 'Correct!' : 'Incorrect'}
                 </span>
              )}
           </div>

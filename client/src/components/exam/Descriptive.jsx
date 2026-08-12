@@ -51,7 +51,7 @@ export const Descriptive = ({
         maxLength={maxLength}
         rows={10}
         className={clsx(
-          'w-full px-5 py-4 text-sm md:text-base rounded-2xl border-2 bg-slate-950 text-slate-100 dark:border-slate-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none resize-none font-mono leading-relaxed',
+          'w-full px-5 py-4 text-sm md:text-base rounded-xl border border-hair bg-surface-lighter text-text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none font-mono leading-relaxed transition-all placeholder:text-text-secondary/50',
           disabled && 'opacity-60 cursor-not-allowed'
         )}
       />

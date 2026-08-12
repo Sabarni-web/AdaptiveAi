@@ -45,6 +45,7 @@ export const Exam = () => {
   const [showExitModal, setShowExitModal] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [saveStatus, setSaveStatus] = useState('saved');
+  const [hasViolated, setHasViolated] = useState(false);
 
   // Trigger fullscreen on start
   useEffect(() => {
@@ -62,12 +63,34 @@ export const Exam = () => {
       e.returnValue = '';
     };
 
+    const handleVisibilityChange = async () => {
+      if (document.hidden && !hasViolated) {
+        setHasViolated(true);
+        toast.error('Security Violation! You switched tabs. Your exam has been automatically submitted.');
+        await finishExam(sessionId);
+        exit();
+      }
+    };
+
+    const handleBlur = async () => {
+      if (!hasViolated) {
+        setHasViolated(true);
+        toast.error('Security Violation! You clicked outside the exam window. Your exam has been automatically submitted.');
+        await finishExam(sessionId);
+        exit();
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [status, sessionId, finishExam, exit]);
+  }, [status, sessionId, finishExam, exit, hasViolated]);
 
   // Update local answer state when question shifts
   useEffect(() => {
@@ -131,6 +154,21 @@ export const Exam = () => {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-400">
         Initializing adaptive exam workspace...
+      </div>
+    );
+  }
+
+  if (hasViolated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="text-red-500 mb-4 animate-pulse">
+          <svg className="w-24 h-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 className="text-3xl font-bold text-red-500">Security Violation Detected</h2>
+        <p className="text-slate-300">You switched tabs or lost focus on the exam window.</p>
+        <p className="text-slate-400 text-sm">Your exam is being submitted...</p>
       </div>
     );
   }

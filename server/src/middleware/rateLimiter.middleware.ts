@@ -19,7 +19,7 @@ const authLimiter = new RateLimiterRedis({
 const examLimiter = new RateLimiterRedis({
   storeClient: redis,
   keyPrefix: 'exam_limit',
-  points: 30, // 30 requests
+  points: 150, // Increased to 150 requests to prevent 429 during testing
   duration: 60, // per 1 minute by user
 });
 

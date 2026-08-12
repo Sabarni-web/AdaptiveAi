@@ -15,6 +15,22 @@ export const StudyRoutineModal = ({ isOpen, onClose, planData, refetchPlan }) =>
   const topPriorityTask = plan.tasks.find(t => t.type === 'practice' && !t.completed);
   const isCompleted = plan.completedMinutes >= plan.totalMinutes;
 
+  const priorityWeight = { high: 3, medium: 2, low: 1, HIGH: 3, MEDIUM: 2, LOW: 1 };
+  
+  const getTaskPriority = (task) => {
+    if (task.priority) return task.priority;
+    if (task.durationMinutes >= 10) return 'high';
+    if (task.durationMinutes >= 7) return 'medium';
+    return 'low';
+  };
+
+  const sortedTasks = [...plan.tasks].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    const pA = priorityWeight[getTaskPriority(a).toLowerCase()] || 0;
+    const pB = priorityWeight[getTaskPriority(b).toLowerCase()] || 0;
+    return pB - pA;
+  });
+
   const handleStartTask = (task) => {
     if (task.type === 'daily_challenge') {
       onClose();
@@ -22,6 +38,15 @@ export const StudyRoutineModal = ({ isOpen, onClose, planData, refetchPlan }) =>
     } else {
       setActiveTask(task);
     }
+  };
+
+  const getPriorityBadge = (task) => {
+    if (task.completed) return null;
+    const p = getTaskPriority(task).toLowerCase();
+    if (p === 'high') return <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider shrink-0 mt-0.5">High Priority</span>;
+    if (p === 'medium') return <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider shrink-0 mt-0.5">Medium Priority</span>;
+    if (p === 'low') return <span className="bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider shrink-0 mt-0.5">Low Priority</span>;
+    return null;
   };
 
   const handleTaskFinish = () => {
@@ -111,25 +136,7 @@ export const StudyRoutineModal = ({ isOpen, onClose, planData, refetchPlan }) =>
                       </div>
                     </div>
 
-                    {/* Top Priority Area */}
-                    {topPriorityTask && (
-                      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                          <AlertTriangle className="w-24 h-24 text-red-500" />
-                        </div>
-                        <div className="relative z-10">
-                          <div className="flex items-center gap-2 text-red-400 font-bold mb-2">
-                            <AlertTriangle className="w-5 h-5" />
-                            ⚠️ TOP PRIORITY
-                          </div>
-                          <h3 className="text-xl font-bold text-white mb-1">{topPriorityTask.title}</h3>
-                          <p className="text-sm text-red-200/70 mb-4">Your weakest area from recent exams.</p>
-                          <Button onClick={() => handleStartTask(topPriorityTask)} className="bg-red-500 hover:bg-red-600 text-white border-none">
-                            Practice Now →
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+
 
                     {/* Today's Plan List */}
                     <div>
@@ -138,17 +145,15 @@ export const StudyRoutineModal = ({ isOpen, onClose, planData, refetchPlan }) =>
                         TODAY'S PLAN
                       </h3>
                       <div className="space-y-3">
-                        {plan.tasks.map((task) => (
+                        {sortedTasks.map((task) => (
                           <div key={task._id} className={`flex items-center justify-between p-4 rounded-xl border ${task.completed ? 'bg-surface-lighter/50 border-hair/50' : 'bg-surface-lighter border-hair hover:border-primary/50 transition-colors'}`}>
                             <div className="flex items-start gap-3">
-                              {task.completed ? (
-                                <CheckSquare className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                              ) : (
-                                <Square className="w-5 h-5 text-text-secondary mt-0.5 shrink-0" />
-                              )}
                               <div>
-                                <div className={`font-medium ${task.completed ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
-                                  {task.title}
+                                <div className="flex items-center gap-3">
+                                  <div className={`font-medium ${task.completed ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
+                                    {task.title}
+                                  </div>
+                                  {getPriorityBadge(task)}
                                 </div>
                                 {task.topic && (
                                   <div className={`text-sm mt-1 ${task.completed ? 'text-text-secondary/50' : 'text-text-secondary'}`}>
