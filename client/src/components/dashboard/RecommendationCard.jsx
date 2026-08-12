@@ -181,15 +181,7 @@ export const RecommendationCard = () => {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-           <select
-             value={selectedLanguage}
-             onChange={(e) => setSelectedLanguage(e.target.value)}
-             className="bg-transparent border border-hair rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mint text-white"
-           >
-             <option value="en" className="bg-slate-900">English</option>
-             <option value="hi" className="bg-slate-900">हिन्दी (Hindi)</option>
-             <option value="bn" className="bg-slate-900">বাংলা (Bengali)</option>
-           </select>
+
           <Button onClick={handleStartTest} variant="primary" className="flex items-center gap-2 whitespace-nowrap">
             <span>Start Recommended Test</span>
             <ArrowRight className="h-4 w-4" />
