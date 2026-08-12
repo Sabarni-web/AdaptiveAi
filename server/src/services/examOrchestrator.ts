@@ -151,9 +151,13 @@ export class ExamOrchestrator {
           isCorrect = (selectedText === question.correctAnswer) || (answer === question.correctAnswer);
         } else {
           // Use AI to evaluate SAQ answers against the explanation/expected answer
-          const aiResult = await aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || '');
+          const [aiResult, aiDetected] = await Promise.all([
+            aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || ''),
+            aiService.detectAIGeneratedText(answer)
+          ]);
           isCorrect = aiResult.isCorrect;
           explanation = aiResult.explanation;
+          (askedQuestion as any).isAIGenerated = aiDetected; // For schema flexibility
         }
         askedQuestion.isCorrect = isCorrect;
         askedQuestion.aiExplanation = explanation;
@@ -174,6 +178,7 @@ export class ExamOrchestrator {
       isCorrect,
       correctAnswer,
       explanation,
+      isAIGenerated: (askedQuestion as any)?.isAIGenerated || false,
       marksAwarded: isCorrect ? 2 : 0,
       ability: session.currentAbility,
       success: true

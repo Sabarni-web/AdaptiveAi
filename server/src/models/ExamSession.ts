@@ -38,7 +38,7 @@ export interface IExamSession extends Document {
   maxPossibleScore?: number;
   percentage?: number;
   grade?: string;
-  tabSwitchCount: number;
+
   fullscreenExits: number;
   ipAddress: string;
   userAgent: string;
@@ -86,7 +86,7 @@ const ExamSessionSchema = new Schema<IExamSession>(
     maxPossibleScore: { type: Number },
     percentage: { type: Number },
     grade: { type: String },
-    tabSwitchCount: { type: Number, default: 0 },
+
     fullscreenExits: { type: Number, default: 0 },
     ipAddress: { type: String },
     userAgent: { type: String },

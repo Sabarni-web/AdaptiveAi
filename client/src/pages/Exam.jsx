@@ -62,30 +62,10 @@ export const Exam = () => {
       e.returnValue = '';
     };
 
-    const handleViolation = async (reason) => {
-      toast.error(`${reason} Exam has been automatically submitted.`);
-      await finishExam(sessionId);
-      exit();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        handleViolation('Tab switch detected!');
-      }
-    };
-
-    const handleBlur = () => {
-      handleViolation('Window focus lost (another app or tab opened)!');
-    };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleBlur);
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleBlur);
     };
   }, [status, sessionId, finishExam, exit]);
 
@@ -209,6 +189,14 @@ export const Exam = () => {
                 <h3 className="text-xl font-bold mb-2">
                   {feedback.isCorrect ? '✅ Correct!' : '❌ Incorrect'}
                 </h3>
+                {feedback.isAIGenerated && (
+                  <div className="mb-3 p-3 bg-red-950/80 border border-red-500 rounded-lg animate-pulse">
+                    <p className="text-red-400 font-bold flex items-center gap-2">
+                      <span className="text-xl">⚠️</span> AI-Generated Content Detected!
+                    </p>
+                    <p className="text-xs text-red-300 mt-1">Your answer was flagged as highly likely to be AI-generated.</p>
+                  </div>
+                )}
                 {!feedback.isCorrect && (
                   <p className="mb-2"><strong>Correct Answer:</strong> {feedback.correctAnswer}</p>
                 )}

@@ -21,6 +21,18 @@ export const Descriptive = ({
     e.preventDefault();
   };
 
+  const handleBeforeInput = (e) => {
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+      e.preventDefault();
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3 w-full">
       <textarea
@@ -33,6 +45,8 @@ export const Descriptive = ({
         onDragOver={blockEvent}
         onDrop={blockEvent}
         onContextMenu={blockEvent}
+        onBeforeInput={handleBeforeInput}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         maxLength={maxLength}
         rows={10}
