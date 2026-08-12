@@ -52,7 +52,7 @@ export const Exam = () => {
     loadNextQuestion(sessionId);
   }, [sessionId]);
 
-  // Exam Navigation Protection and Tab Switch Auto-Submit
+  // Exam Navigation Protection and Tab Switch/Focus Loss Auto-Submit
   useEffect(() => {
     const isExamActive = status !== 'idle' && status !== 'completed';
     if (!isExamActive) return;
@@ -62,20 +62,30 @@ export const Exam = () => {
       e.returnValue = '';
     };
 
-    const handleVisibilityChange = async () => {
+    const handleViolation = async (reason) => {
+      toast.error(`${reason} Exam has been automatically submitted.`);
+      await finishExam(sessionId);
+      exit();
+    };
+
+    const handleVisibilityChange = () => {
       if (document.hidden) {
-        toast.error('Tab switch detected! Exam has been automatically submitted.');
-        await finishExam(sessionId);
-        exit();
+        handleViolation('Tab switch detected!');
       }
+    };
+
+    const handleBlur = () => {
+      handleViolation('Window focus lost (another app or tab opened)!');
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
     };
   }, [status, sessionId, finishExam, exit]);
 
