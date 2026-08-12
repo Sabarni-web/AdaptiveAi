@@ -194,7 +194,7 @@ export const Exam = () => {
                     <p className="text-red-400 font-bold flex items-center gap-2">
                       <span className="text-xl">⚠️</span> AI-Generated Content Detected!
                     </p>
-                    <p className="text-xs text-red-300 mt-1">Your answer was flagged as highly likely to be AI-generated.</p>
+                    <p className="text-xs text-red-300 mt-1">Your answer was flagged as highly likely to be AI-generated ({feedback.aiPercentage}% match).</p>
                   </div>
                 )}
                 {!feedback.isCorrect && (

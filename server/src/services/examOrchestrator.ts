@@ -157,7 +157,8 @@ export class ExamOrchestrator {
           ]);
           isCorrect = aiResult.isCorrect;
           explanation = aiResult.explanation;
-          (askedQuestion as any).isAIGenerated = aiDetected; // For schema flexibility
+          (askedQuestion as any).isAIGenerated = aiDetected.isAIGenerated; // For schema flexibility
+          (askedQuestion as any).aiPercentage = aiDetected.aiPercentage;
         }
         askedQuestion.isCorrect = isCorrect;
         askedQuestion.aiExplanation = explanation;
@@ -179,6 +180,7 @@ export class ExamOrchestrator {
       correctAnswer,
       explanation,
       isAIGenerated: (askedQuestion as any)?.isAIGenerated || false,
+      aiPercentage: (askedQuestion as any)?.aiPercentage || 0,
       marksAwarded: isCorrect ? 2 : 0,
       ability: session.currentAbility,
       success: true
