@@ -1,90 +1,145 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { Target, CheckSquare, Square, ArrowRight } from 'lucide-react';
+import { Target, CheckSquare, Square, ArrowRight, Loader2 } from 'lucide-react';
 import { useSettings } from '../../hooks/useSettings';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { studyPlanService } from '../../services/studyPlanService';
+import { StudyRoutineModal } from '../study-plan/StudyRoutineModal';
+import { motion } from 'framer-motion';
 
 export const StudyPlanCard = () => {
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Determine user preferences or fallback to defaults
+  const { data: planData, isLoading, error, refetch } = useQuery({
+    queryKey: ['todayStudyPlan'],
+    queryFn: studyPlanService.getTodayPlan
+  });
+
   const dailyGoal = settings?.study?.dailyStudyGoal || '30 minutes';
-  
-  // Calculate mock tasks (could be connected to real challenge status)
-  // Assuming total goal is mapped to numbers roughly
-  const minutes = parseInt(dailyGoal) || 30;
-  const challengeTime = Math.round(minutes * 0.2) || 5;
-  const weakSubjectTime = Math.round(minutes * 0.5) || 15;
-  const practiceTime = Math.round(minutes * 0.3) || 10;
-  
-  // Hardcoded progress for now, could be derived from gamification streak or today's xp
-  const progressPercent = 40;
 
-  return (
-    <Card 
-      title={
+  if (isLoading) {
+    return (
+      <Card title={
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
           <span>TODAY'S STUDY PLAN</span>
         </div>
-      } 
-      className="h-full flex flex-col"
-    >
-      <div className="flex flex-col h-full gap-4 mt-2">
-        <div className="text-sm font-medium text-text-secondary">
-          Goal: <span className="text-primary font-bold">{dailyGoal}</span>
-        </div>
-        
-        <div className="flex flex-col gap-3 flex-1">
-          <div className="flex items-center justify-between group cursor-pointer hover:bg-surface/50 p-2 -mx-2 rounded transition-colors">
-            <div className="flex items-center gap-3">
-              <CheckSquare className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-text-primary line-through opacity-70">Daily Challenge</span>
-            </div>
-            <span className="text-xs text-text-secondary">{challengeTime} min</span>
-          </div>
-          
-          <div className="flex items-center justify-between group cursor-pointer hover:bg-surface/50 p-2 -mx-2 rounded transition-colors">
-            <div className="flex items-center gap-3">
-              <Square className="h-5 w-5 text-text-secondary group-hover:text-primary transition-colors" />
-              <span className="text-sm font-medium text-text-primary">Weak Subject</span>
-            </div>
-            <span className="text-xs text-text-secondary">{weakSubjectTime} min</span>
-          </div>
-          
-          <div className="flex items-center justify-between group cursor-pointer hover:bg-surface/50 p-2 -mx-2 rounded transition-colors">
-            <div className="flex items-center gap-3">
-              <Square className="h-5 w-5 text-text-secondary group-hover:text-primary transition-colors" />
-              <span className="text-sm font-medium text-text-primary">Practice</span>
-            </div>
-            <span className="text-xs text-text-secondary">{practiceTime} min</span>
-          </div>
-        </div>
+      } className="h-full flex flex-col justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary opacity-50" />
+        <span className="text-sm text-text-secondary mt-2">Analyzing your recent performance...</span>
+      </Card>
+    );
+  }
 
-        <div className="flex flex-col gap-2 mt-auto pt-4 border-t border-hair">
-          <div className="flex items-center justify-between text-xs text-text-secondary">
-            <span>Progress</span>
-            <span className="text-primary font-bold">{progressPercent}%</span>
-          </div>
-          <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary transition-all duration-1000 ease-out"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          
-          <Button 
-            className="w-full mt-3 group" 
-            variant="outline" 
-            onClick={() => navigate('/daily-challenge')}
-          >
-            Continue Plan
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+  if (error || !planData?.success) {
+    return (
+      <Card title={
+        <div className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-primary" />
+          <span>TODAY'S STUDY PLAN</span>
+        </div>
+      } className="h-full flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+          <p className="text-sm text-text-secondary mb-4">Unable to generate your study plan right now. Please try again.</p>
+          <Button onClick={() => refetch()} variant="outline" size="sm">Retry</Button>
+        </div>
+      </Card>
+    );
+  }
+
+  if (planData.needsData) {
+    return (
+      <Card title={
+        <div className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-primary" />
+          <span>BUILD YOUR FIRST STUDY PLAN</span>
+        </div>
+      } className="h-full flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-4 gap-4">
+          <p className="text-sm text-text-secondary">
+            We need some exam performance data before we can personalize your routine.
+          </p>
+          <Button onClick={() => navigate('/exams')} className="w-full">
+            Take an Exam
           </Button>
         </div>
-      </div>
-    </Card>
+      </Card>
+    );
+  }
+
+  const { plan } = planData;
+  const progressPercent = plan.totalMinutes > 0 ? Math.round((plan.completedMinutes / plan.totalMinutes) * 100) : 0;
+
+  return (
+    <>
+      <Card 
+        title={
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            <span>TODAY'S STUDY PLAN</span>
+          </div>
+        } 
+        className="h-full flex flex-col"
+      >
+        <div className="flex flex-col h-full gap-4 mt-2">
+          <div className="text-sm font-medium text-text-secondary">
+            Goal: <span className="text-primary font-bold">{plan.goalMinutes} minutes</span>
+          </div>
+          
+          <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
+            {plan.tasks.map((task, index) => (
+              <div key={index} className="flex items-center justify-between group cursor-pointer hover:bg-surface/50 p-2 -mx-2 rounded transition-colors" onClick={() => setIsModalOpen(true)}>
+                <div className="flex items-center gap-3 truncate mr-2">
+                  {task.completed ? (
+                    <CheckSquare className="h-5 w-5 text-primary shrink-0" />
+                  ) : (
+                    <Square className="h-5 w-5 text-text-secondary group-hover:text-primary transition-colors shrink-0" />
+                  )}
+                  <span className={`text-sm font-medium truncate ${task.completed ? 'text-text-secondary line-through opacity-70' : 'text-text-primary'}`}>
+                    {task.title}
+                  </span>
+                </div>
+                <span className="text-xs text-text-secondary whitespace-nowrap">{task.durationMinutes} min</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2 mt-auto pt-4 border-t border-hair">
+            <div className="flex items-center justify-between text-xs text-text-secondary">
+              <span>Progress</span>
+              <span className="text-primary font-bold">{progressPercent}%</span>
+            </div>
+            <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-1000 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            
+            <Button 
+              className="w-full mt-3 group" 
+              variant="outline" 
+              onClick={() => setIsModalOpen(true)}
+            >
+              Continue Plan
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {isModalOpen && (
+        <StudyRoutineModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          planData={planData} 
+          refetchPlan={refetch}
+        />
+      )}
+    </>
   );
 };

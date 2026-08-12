@@ -21,6 +21,7 @@ import proctoringRoutes from './routes/proctoring.routes';
 import tutorRoutes from './routes/tutor.routes';
 import dailyChallengeRoutes from './routes/dailyChallenge.routes';
 import settingsRoutes from './routes/settings.routes';
+import studyPlanRoutes from './routes/studyPlan.routes';
 import { setupSwagger } from './config/swagger';
 
 const app = express();
@@ -64,6 +65,7 @@ app.use('/api/v1/proctoring', proctoringRoutes);
 app.use('/api/v1/tutor', tutorRoutes);
 app.use('/api/v1/daily-challenge', dailyChallengeRoutes);
 app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/study-plan', studyPlanRoutes);
 app.use(errorHandler);
 
 export default app;
