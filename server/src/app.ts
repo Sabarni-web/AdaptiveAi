@@ -20,6 +20,7 @@ import questionBankRoutes from './routes/questionBank.routes';
 import proctoringRoutes from './routes/proctoring.routes';
 import tutorRoutes from './routes/tutor.routes';
 import dailyChallengeRoutes from './routes/dailyChallenge.routes';
+import settingsRoutes from './routes/settings.routes';
 import { setupSwagger } from './config/swagger';
 
 const app = express();
@@ -62,6 +63,7 @@ app.use('/api/v1/question-bank', questionBankRoutes);
 app.use('/api/v1/proctoring', proctoringRoutes);
 app.use('/api/v1/tutor', tutorRoutes);
 app.use('/api/v1/daily-challenge', dailyChallengeRoutes);
+app.use('/api/v1/settings', settingsRoutes);
 app.use(errorHandler);
 
 export default app;

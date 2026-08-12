@@ -33,47 +33,6 @@ export const seedDatabase = async () => {
 
     const userId = user._id as mongoose.Types.ObjectId;
 
-    // 2. Ensure we have the evaluation ExamConfig
-    const configId = new mongoose.Types.ObjectId('65f1a2b3c4d5e6f7a8b9c0d1');
-    const existingConfig = await ExamConfig.findById(configId);
-    if (!existingConfig) {
-      const config = new ExamConfig({
-        _id: configId,
-        title: 'Full Stack Engineering Evaluation',
-        subject: 'Computer Science',
-        description: 'Take the computer science adaptive evaluation test containing algorithmic and system design questions.',
-        createdBy: userId,
-        adaptiveSettings: {
-          initialQuestions: 1,
-          minQuestions: 5,
-          maxQuestions: 5,
-          targetPrecision: 0.3,
-          abilityPrior: 0.0
-        },
-        questionPool: {
-          subjects: ['Computer Science'],
-          chapters: ['Data Structures', 'Database Systems', 'System Design'],
-          bloomLevels: ['understand', 'apply', 'analyze'],
-          tags: ['fullstack', 'core'],
-          questionCount: 5
-        },
-        gradingConfig: {
-          mcqWeight: 1,
-          descriptiveWeight: 1,
-          passingPercentage: 50
-        },
-        security: {
-          shuffleQuestions: true,
-          shuffleOptions: true,
-          allowNavigation: false,
-          showResultImmediately: true,
-          fullscreenRequired: false
-        },
-        status: 'active'
-      });
-      await config.save();
-      logger.info('Default ExamConfig seeded.');
-    }
 
     // 3. Ensure we have sample questions
     const questionCount = await Question.countDocuments();

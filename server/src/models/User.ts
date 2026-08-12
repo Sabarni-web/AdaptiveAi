@@ -33,6 +33,70 @@ export interface IUser extends Document {
     longestStreak: number;
     totalChallengesCompleted: number;
   };
+  preferences?: {
+    appearance?: {
+      theme?: string;
+      accentColor?: string;
+      reduceAnimations?: boolean;
+      compactInterface?: boolean;
+      dashboardAnimations?: boolean;
+    };
+    ai?: {
+      explanationStyle?: string;
+      language?: string;
+      recommendationsEnabled?: boolean;
+      personalizedLearning?: boolean;
+      automaticExplanation?: boolean;
+      studySuggestions?: boolean;
+    };
+    study?: {
+      primaryDomain?: string;
+      preferredDifficulty?: string;
+      dailyStudyGoal?: string;
+      preferredLanguage?: string;
+      preferredSubjects?: string[];
+    };
+    notifications?: {
+      dailyChallenge?: boolean;
+      examReminder?: boolean;
+      resultNotification?: boolean;
+      aiRecommendation?: boolean;
+      certificate?: boolean;
+      achievement?: boolean;
+      streak?: boolean;
+      system?: boolean;
+    };
+    dailyChallenge?: {
+      enabled?: boolean;
+      difficulty?: string;
+      domains?: string[];
+      reminderEnabled?: boolean;
+      reminderTime?: string;
+      streakNotifications?: boolean;
+    };
+    exam?: {
+      showTimer?: boolean;
+      showQuestionNumber?: boolean;
+      confirmBeforeStart?: boolean;
+      autoSubmit?: boolean;
+      leaveWarning?: boolean;
+      rememberLanguage?: boolean;
+    };
+    accessibility?: {
+      fontSize?: string;
+      highContrast?: boolean;
+      reduceMotion?: boolean;
+      keyboardNavigation?: boolean;
+      screenReader?: boolean;
+    };
+    sound?: {
+      master?: boolean;
+      correctAnswer?: boolean;
+      incorrectAnswer?: boolean;
+      challengeCompletion?: boolean;
+      notification?: boolean;
+    };
+  };
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -71,6 +135,70 @@ const UserSchema = new Schema<IUser>(
       currentStreak: { type: Number, default: 0 },
       longestStreak: { type: Number, default: 0 },
       totalChallengesCompleted: { type: Number, default: 0 },
+    },
+    preferences: {
+      appearance: {
+        theme: { type: String, default: 'dark' },
+        accentColor: { type: String, default: 'default' },
+        reduceAnimations: { type: Boolean, default: false },
+        compactInterface: { type: Boolean, default: false },
+        dashboardAnimations: { type: Boolean, default: true },
+      },
+      ai: {
+        explanationStyle: { type: String, default: 'Balanced' },
+        language: { type: String, default: 'English' },
+        recommendationsEnabled: { type: Boolean, default: true },
+        personalizedLearning: { type: Boolean, default: true },
+        automaticExplanation: { type: Boolean, default: false },
+        studySuggestions: { type: Boolean, default: true },
+      },
+      study: {
+        primaryDomain: { type: String, default: 'CSE Core' },
+        preferredDifficulty: { type: String, default: 'Adaptive' },
+        dailyStudyGoal: { type: String, default: '30 minutes' },
+        preferredLanguage: { type: String, default: 'English' },
+        preferredSubjects: [{ type: String }],
+      },
+      notifications: {
+        dailyChallenge: { type: Boolean, default: true },
+        examReminder: { type: Boolean, default: true },
+        resultNotification: { type: Boolean, default: true },
+        aiRecommendation: { type: Boolean, default: true },
+        certificate: { type: Boolean, default: true },
+        achievement: { type: Boolean, default: true },
+        streak: { type: Boolean, default: true },
+        system: { type: Boolean, default: true },
+      },
+      dailyChallenge: {
+        enabled: { type: Boolean, default: true },
+        difficulty: { type: String, default: 'Adaptive' },
+        domains: [{ type: String }],
+        reminderEnabled: { type: Boolean, default: true },
+        reminderTime: { type: String, default: '09:00' },
+        streakNotifications: { type: Boolean, default: true },
+      },
+      exam: {
+        showTimer: { type: Boolean, default: true },
+        showQuestionNumber: { type: Boolean, default: true },
+        confirmBeforeStart: { type: Boolean, default: true },
+        autoSubmit: { type: Boolean, default: true },
+        leaveWarning: { type: Boolean, default: true },
+        rememberLanguage: { type: Boolean, default: true },
+      },
+      accessibility: {
+        fontSize: { type: String, default: 'Medium' },
+        highContrast: { type: Boolean, default: false },
+        reduceMotion: { type: Boolean, default: false },
+        keyboardNavigation: { type: Boolean, default: false },
+        screenReader: { type: Boolean, default: false },
+      },
+      sound: {
+        master: { type: Boolean, default: true },
+        correctAnswer: { type: Boolean, default: true },
+        incorrectAnswer: { type: Boolean, default: false },
+        challengeCompletion: { type: Boolean, default: true },
+        notification: { type: Boolean, default: true },
+      }
     },
     lastLogin: Date,
   },
