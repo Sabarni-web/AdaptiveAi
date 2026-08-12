@@ -32,7 +32,7 @@ body.light {
 body.light .card {
   background: white;
   border-color: #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 body.light .card .text-primary {
@@ -48,22 +48,33 @@ body.light .card .text-secondary {
   background: linear-gradient(180deg, var(--bg-surface) 0%, #0A1310 100%);
   border: 1px solid var(--border-hair);
   border-radius: var(--radius-lg);
-  box-shadow: 0 20px 40px -20px rgba(0,0,0,0.6);
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6);
   transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
 }
+
 .card:hover {
   transform: translateY(-4px);
-  border-color: rgba(57,255,176,0.35);
-  box-shadow: 0 24px 48px -16px rgba(0,0,0,0.7), 0 0 30px -8px var(--mint-glow);
+  border-color: rgba(57, 255, 176, 0.35);
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.7), 0 0 30px -8px var(--mint-glow);
 }
 
 /* Ambient float, applied to hero/stat cards on load */
 @keyframes floatY {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
+
 @media (prefers-reduced-motion: no-preference) {
-  .card--float { animation: floatY 6s ease-in-out infinite; }
+  .card--float {
+    animation: floatY 6s ease-in-out infinite;
+  }
 }
 
 /* Mint pill button (the "Get started ->" / "Start Exam" button) */
@@ -77,6 +88,7 @@ body.light .card .text-secondary {
   box-shadow: 0 0 0 0 var(--mint-glow);
   transition: box-shadow .3s ease, transform .2s ease;
 }
+
 .btn-mint:hover {
   box-shadow: 0 0 24px 4px var(--mint-glow);
   transform: translateY(-1px);
@@ -86,13 +98,14 @@ body.light .btn-mint {
   background: black;
   color: white;
 }
+
 body.light .btn-mint:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Sidebar active nav item glow, replaces the current solid-blue block */
 .nav-item.active {
-  background: linear-gradient(90deg, rgba(57,255,176,0.15), transparent);
+  background: linear-gradient(90deg, rgba(57, 255, 176, 0.15), transparent);
   border-left: 2px solid var(--mint);
   color: var(--mint);
 }
@@ -102,6 +115,7 @@ body.light .btn-mint:hover {
   position: relative;
   display: inline-flex;
 }
+
 @media (prefers-reduced-motion: no-preference) {
   .adaptive-ring::before {
     content: "";
@@ -113,10 +127,21 @@ body.light .btn-mint:hover {
     animation: pulseRing 2.4s ease-out infinite;
   }
 }
+
 @keyframes pulseRing {
-  0% { transform: scale(0.85); opacity: 0.6; }
-  70% { transform: scale(1.15); opacity: 0; }
-  100% { opacity: 0; }
+  0% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+
+  70% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Sparkline / trend accent under big numbers, mint gradient like Verda's chart cards */
@@ -127,18 +152,84 @@ body.light .btn-mint:hover {
 
 /* Number count-up feel: fade+rise on mount, stagger via nth-child in JSX */
 @keyframes riseIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 @media (prefers-reduced-motion: no-preference) {
-  .animate-in { animation: riseIn .6s cubic-bezier(.22,1,.36,1) both; }
+  .animate-in {
+    animation: riseIn .6s cubic-bezier(.22, 1, .36, 1) both;
+  }
 }
 
 /* Topic-performance heat tiles: keep hue-by-score, but on dark surfaces */
-.tile-green   { background: linear-gradient(135deg, #14532D, #0E1712); border: 1px solid #1FB582; }
-.tile-amber   { background: linear-gradient(135deg, #4A3B12, #0E1712); border: 1px solid #FFC24B; }
-.tile-red     { background: linear-gradient(135deg, #4A1414, #0E1712); border: 1px solid #FF6B6B; }
+.tile-green {
+  background: linear-gradient(135deg, #14532D, #0E1712);
+  border: 1px solid #1FB582;
+}
 
-body.light .tile-green   { background: linear-gradient(135deg, #d1fae5, #ecfdf5); border: 1px solid #34d399; }
-body.light .tile-amber   { background: linear-gradient(135deg, #fef3c7, #fffbeb); border: 1px solid #fbbf24; }
-body.light .tile-red     { background: linear-gradient(135deg, #fee2e2, #fef2f2); border: 1px solid #f87171; }
+.tile-amber {
+  background: linear-gradient(135deg, #4A3B12, #0E1712);
+  border: 1px solid #FFC24B;
+}
+
+.tile-red {
+  background: linear-gradient(135deg, #4A1414, #0E1712);
+  border: 1px solid #FF6B6B;
+}
+
+body.light .tile-green {
+  background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+  border: 1px solid #34d399;
+}
+
+body.light .tile-amber {
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  border: 1px solid #fbbf24;
+}
+
+body.light .tile-red {
+  background: linear-gradient(135deg, #fee2e2, #fef2f2);
+  border: 1px solid #f87171;
+}
+
+/* AI Brain Living Animations */
+@keyframes brainFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes brainTilt {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes brainPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+
+@keyframes aiParticle {
+  0% { transform: translateY(0) scale(1); opacity: 0.2; }
+  50% { transform: translateY(-10px) scale(1.2); opacity: 0.8; }
+  100% { transform: translateY(0) scale(1); opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .brain-float { animation: brainFloat 5.5s ease-in-out infinite; }
+  .brain-tilt { animation: brainTilt 4.5s ease-in-out infinite; }
+  .brain-pulse { animation: brainPulse 4s ease-in-out infinite; }
+
+  /* Inner ring pulsing */
+  .animate-ai-pulse { animation: aiBrainPulse 4s ease-in-out infinite; }
+  .animate-particle-1 { animation: aiParticle 3s ease-in-out infinite alternate; }
+  .animate-particle-2 { animation: aiParticle 4s ease-in-out infinite alternate-reverse; }
+  .animate-particle-3 { animation: aiParticle 5s ease-in-out infinite alternate; }
+}

@@ -95,10 +95,10 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className="fixed bottom-24 right-6 w-[380px] max-w-[calc(100vw-32px)] h-[550px] max-h-[calc(100vh-120px)] bg-white dark:bg-[#0f141e] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl flex flex-col z-[100] overflow-hidden"
+      className="fixed bottom-24 right-6 w-[380px] max-w-[calc(100vw-32px)] h-[550px] max-h-[calc(100vh-120px)] bg-black border border-gray-800 rounded-2xl shadow-2xl flex flex-col z-[100] overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1a2234]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-black">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-8 h-8 rounded-full bg-mint/20 flex items-center justify-center border border-mint/30">
@@ -107,18 +107,18 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 dark:border-[#1a2234] border-gray-50"></div>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">AdaptiveAI Tutor</h3>
+            <h3 className="font-semibold text-white text-sm">AdaptiveAI Tutor</h3>
             <span className="text-[10px] text-primary-600 dark:text-primary-300 font-medium">● Online</span>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-          <button onClick={clearChat} className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-md transition-colors" title="Clear Chat">
+        <div className="flex items-center gap-1 text-gray-400">
+          <button onClick={clearChat} className="p-1.5 hover:bg-white/10 rounded-md transition-colors" title="Clear Chat">
             <Trash2 size={16} />
           </button>
-          <button onClick={onMinimize} className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-md transition-colors" title="Minimize">
+          <button onClick={onMinimize} className="p-1.5 hover:bg-white/10 rounded-md transition-colors" title="Minimize">
             <Minus size={16} />
           </button>
-          <button onClick={onClose} className="p-1.5 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-400 rounded-md transition-colors" title="Close">
+          <button onClick={onClose} className="p-1.5 hover:bg-red-500/20 hover:text-red-400 rounded-md transition-colors" title="Close">
             <X size={16} />
           </button>
         </div>
@@ -138,8 +138,8 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
                 msg.role === 'user' 
                   ? 'bg-primary-600 text-white rounded-tr-sm' 
                   : msg.isError 
-                    ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-200 border border-red-200 dark:border-red-500/30 rounded-tl-sm'
-                    : 'bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 rounded-tl-sm'
+                    ? 'bg-red-900/30 text-red-200 border border-red-500/30 rounded-tl-sm'
+                    : 'bg-gray-900 border border-gray-800 text-gray-200 rounded-tl-sm'
               }`}>
                 {msg.role === 'user' ? (
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -153,13 +153,13 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
               {/* Quick Actions (only show on last AI message if not loading) */}
               {msg.role === 'ai' && !msg.isError && i === messages.length - 1 && !isLoading && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <button onClick={() => handleAction('simpler')} className="text-[11px] bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 px-2 py-1 rounded-full text-primary-600 dark:text-primary-300 flex items-center gap-1 transition-colors">
+                  <button onClick={() => handleAction('simpler')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-primary-400 flex items-center gap-1 transition-colors">
                     <BookOpen size={12} /> Explain Simpler
                   </button>
-                  <button onClick={() => handleAction('example')} className="text-[11px] bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 px-2 py-1 rounded-full text-teal-600 dark:text-mint flex items-center gap-1 transition-colors">
+                  <button onClick={() => handleAction('example')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-mint flex items-center gap-1 transition-colors">
                     <Lightbulb size={12} /> Give Example
                   </button>
-                  <button onClick={() => handleAction('quiz')} className="text-[11px] bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 px-2 py-1 rounded-full text-purple-600 dark:text-purple-300 flex items-center gap-1 transition-colors">
+                  <button onClick={() => handleAction('quiz')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-purple-400 flex items-center gap-1 transition-colors">
                     <HelpCircle size={12} /> Quiz Me
                   </button>
                 </div>
@@ -177,7 +177,7 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#13192b]">
+      <div className="p-3 border-t border-gray-800 bg-black">
         <form 
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="relative flex items-center"
@@ -188,7 +188,7 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask your doubt..."
             disabled={isLoading}
-            className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all disabled:opacity-50 shadow-sm dark:shadow-none"
+            className="w-full bg-gray-900 border border-gray-800 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all disabled:opacity-50"
           />
           <button
             type="submit"

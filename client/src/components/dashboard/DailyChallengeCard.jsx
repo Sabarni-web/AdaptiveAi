@@ -57,7 +57,7 @@ export const DailyChallengeCard = () => {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-cyan-500/20 bg-slate-900/50 backdrop-blur shadow-[0_0_15px_rgba(6,182,212,0.15)] flex flex-col p-5 h-full">
+    <div className="relative overflow-hidden rounded-xl border border-cyan-500/20 bg-black backdrop-blur shadow-[0_0_15px_rgba(6,182,212,0.15)] flex flex-col p-5 h-full">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
       
       <div className="flex items-center gap-2 mb-2">
