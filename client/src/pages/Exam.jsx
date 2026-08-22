@@ -72,22 +72,11 @@ export const Exam = () => {
       }
     };
 
-    const handleBlur = async () => {
-      if (!hasViolated) {
-        setHasViolated(true);
-        toast.error('Security Violation! You clicked outside the exam window. Your exam has been automatically submitted.');
-        await finishExam(sessionId);
-        exit();
-      }
-    };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [status, sessionId, finishExam, exit, hasViolated]);

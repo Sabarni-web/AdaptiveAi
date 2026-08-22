@@ -24,6 +24,16 @@ const proctoringService = {
       console.error('Error logging head direction violation:', error);
       throw error;
     }
+  },
+
+  logExamViolation: async (violationData) => {
+    try {
+      const response = await apiClient.post('/proctoring/violations', violationData);
+      return response.data;
+    } catch (error) {
+      console.error('Error logging exam violation:', error);
+      throw error;
+    }
   }
 };
 

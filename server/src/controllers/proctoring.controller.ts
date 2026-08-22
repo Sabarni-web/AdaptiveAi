@@ -118,3 +118,48 @@ export const getHeadDirectionViolations = async (req: Request, res: Response): P
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const logExamViolation = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { examSessionId, violationType, message, confidence, duration, metadata } = req.body;
+    const userId = (req.user as any)?.id || (req.user as any)?.userId;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // Dynamic import to avoid circular dependency or just import at top. We will import at top.
+    const { ExamViolation } = await import('../models/ExamViolation');
+
+    const violation = new ExamViolation({
+      userId,
+      examSessionId,
+      violationType,
+      message,
+      confidence,
+      duration,
+      metadata
+    });
+
+    await violation.save();
+
+    res.status(201).json({ message: 'Violation logged', violation });
+  } catch (error) {
+    logger.error('Error logging exam violation:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getExamViolations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { examSessionId } = req.params;
+    const { ExamViolation } = await import('../models/ExamViolation');
+    
+    const violations = await ExamViolation.find({ examSessionId }).populate('userId', 'name email');
+    res.json(violations);
+  } catch (error) {
+    logger.error('Error fetching exam violations:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

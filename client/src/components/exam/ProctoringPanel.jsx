@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ShieldAlert, ShieldCheck, AlertTriangle as ShieldWarning } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,24 +7,68 @@ import proctoringService from '../../services/proctoringService';
 import { useSocket } from '../../hooks/useSocket';
 import '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
+import { voiceAlertService } from '../../services/voiceAlertService';
+import { ExamViolationAlert } from './ExamViolationAlert';
+
+const EXAM_MONITOR_CONFIG = {
+  headTurnDurationMs: 800,
+  noFaceGracePeriodMs: 1500,
+  phoneConfirmationMs: 800,
+  multiplePersonConfirmationMs: 800,
+  phoneConfidence: 0.60,
+  personConfidence: 0.50,
+  yawThreshold: 25,
+  pitchThreshold: 25
+};
 
 export const ProctoringPanel = ({ examId, questionNumber }) => {
   const dispatch = useDispatch();
   const videoRef = useRef(null);
-  const [model, setModel] = useState(null);
+  const [models, setModels] = useState({ coco: null, face: null });
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [cameraStatus, setCameraStatus] = useState('Starting camera...'); 
+  const [cameraStatus, setCameraStatus] = useState('Starting camera...');
   const { personCount, integrityScore } = useSelector((state) => state.proctor);
-  const { sessionId } = examId ? { sessionId: examId } : { sessionId: 'unknown' }; 
+  const { sessionId } = examId ? { sessionId: examId } : { sessionId: 'unknown' };
   const socket = useSocket(examId);
 
-  const [proctorState, setProctorState] = useState('ONE_PERSON'); // ONE_PERSON, MULTIPLE_PERSONS, NO_PERSON
-  
-  // Debounce tracking refs
-  const detectionCounts = useRef({
-    0: 0,
-    1: 0,
-    'multiple': 0
+  const [activeViolation, setActiveViolation] = useState(null); // { type, message }
+  const [violationCounts, setViolationCounts] = useState({ headTurn: 0, multiplePerson: 0, phone: 0, noFace: 0 });
+
+  const [proctorState, setProctorState] = useState('ONE_PERSON');
+  const [debugInfo, setDebugInfo] = useState({
+    faceDetected: 'WAITING',
+    landmarks: 'WAITING',
+    yaw: '0.0',
+    neutralYaw: '0.0',
+    relativeYaw: '0.0',
+    pitch: '0.0',
+    direction: 'CENTER',
+    status: 'INITIALIZING',
+    calibrating: 'WAITING'
+  });
+
+  const headPoseRef = useRef({
+    isCalibrating: true,
+    calibrationFrames: 0,
+    yawSum: 0,
+    pitchSum: 0,
+    neutralYaw: 0,
+    neutralPitch: 0,
+    currentYaw: 0,
+    currentPitch: 0,
+    direction: 'CENTER'
+  });
+
+  // Debounce tracking refs based on timestamps
+  const trackingRef = useRef({
+    headTurnStart: 0,
+    headTurnNormalStart: 0,
+    noFaceStart: 0,
+    noFaceNormalStart: 0,
+    phoneStart: 0,
+    multiplePersonStart: 0,
+    lastReportedType: null
   });
 
   useEffect(() => {
@@ -34,21 +78,16 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
     const initProctoring = async () => {
       try {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-           throw new Error('Your browser does not support camera access.');
+          throw new Error('Your browser does not support camera access.');
         }
-        
+
         setCameraStatus('Camera permission required');
-        
-        // Exact params requested
+
         localStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: "user"
-            },
-            audio: false
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+          audio: false
         });
-        
+
         if (!isMounted) {
           localStream.getTracks().forEach(track => track.stop());
           return;
@@ -57,31 +96,29 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
         if (videoRef.current) {
           videoRef.current.srcObject = localStream;
           setIsCameraActive(true);
-          setCameraStatus('Camera active');
-          
-          try {
-            await videoRef.current.play();
-          } catch (playErr) {
-            console.warn('AutoPlay blocked', playErr);
-          }
+          setCameraStatus('Initializing AI models...');
+
+          try { await videoRef.current.play(); } catch (e) { }
         }
-        
-        const loadedModel = await cocoSsd.load();
-        if (isMounted) setModel(loadedModel);
-        
+
+        const [coco, face] = await Promise.all([
+          cocoSsd.load(),
+          faceLandmarksDetection.createDetector(
+            faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
+            { runtime: 'tfjs' }
+          )
+        ]);
+
+        if (isMounted) {
+          setModels({ coco, face });
+          setCameraStatus('Camera active');
+        }
+
       } catch (err) {
         if (!isMounted) return;
-        console.error('Proctoring Init Error:', err);
-        
         let errorMsg = 'Camera unavailable';
         if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
-          errorMsg = 'Camera access is required for AI proctoring. Please allow camera access in your browser and try again.';
-        } else if (err.name === 'NotFoundError') {
-          errorMsg = 'No camera device found.';
-        } else if (err.name === 'NotReadableError') {
-          errorMsg = 'Camera is already in use by another application.';
-        } else if (err.message) {
-          errorMsg = err.message;
+          errorMsg = 'Camera access is required for AI proctoring.';
         }
         setCameraStatus(errorMsg);
       }
@@ -91,153 +128,274 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
 
     return () => {
       isMounted = false;
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
       if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = videoRef.current.srcObject.getTracks();
-        tracks.forEach(track => track.stop());
-        videoRef.current.srcObject = null;
+        videoRef.current.srcObject.getTracks().forEach(t => t.stop());
       }
+      voiceAlertService.cancel();
     };
   }, []);
 
+  const clearViolation = useCallback(() => {
+    setActiveViolation(null);
+    trackingRef.current.lastReportedType = null;
+  }, []);
+
+  const triggerViolation = useCallback(async (type, message, confidence = 1.0) => {
+    if (trackingRef.current.lastReportedType === type) return;
+
+    setActiveViolation({ type, message });
+    trackingRef.current.lastReportedType = type;
+    voiceAlertService.speakViolation(message, type);
+
+    setViolationCounts(prev => ({
+      ...prev,
+      [type === 'HEAD_TURN' ? 'headTurn' : type === 'MULTIPLE_PERSON' ? 'multiplePerson' : type === 'NO_FACE' ? 'noFace' : 'phone']:
+        prev[type === 'HEAD_TURN' ? 'headTurn' : type === 'MULTIPLE_PERSON' ? 'multiplePerson' : type === 'NO_FACE' ? 'noFace' : 'phone'] + 1
+    }));
+
+    if (type === 'MULTIPLE_PERSON') setProctorState('MULTIPLE_PERSONS');
+
+    try {
+      const ts = new Date().toISOString();
+      const payload = {
+        examSessionId: examId,
+        violationType: type,
+        message,
+        confidence,
+        duration: 2,
+        metadata: { questionNumber }
+      };
+      // For unified endpoint
+      await proctoringService.logExamViolation(payload);
+      socket.socket?.emit('exam:violation', payload);
+    } catch (err) {
+      console.error('Error logging violation', err);
+    }
+  }, [examId, questionNumber, socket]);
+
   useEffect(() => {
     let intervalId;
-    const CONFIRMATION_THRESHOLD = 4; // Approx 2 seconds at 500ms intervals
 
     const detectFrame = async () => {
-      if (videoRef.current && model && isCameraActive && videoRef.current.readyState === 4) {
-        const predictions = await model.detect(videoRef.current);
-        const persons = predictions.filter(p => p.class === 'person');
+      if (!videoRef.current || !models.coco || !models.face || !isCameraActive || videoRef.current.readyState !== 4) return;
+
+      const now = Date.now();
+      const t = trackingRef.current;
+
+      try {
+        const [cocoPredictions, faces] = await Promise.all([
+          models.coco.detect(videoRef.current),
+          models.face.estimateFaces(videoRef.current, { flipHorizontal: false })
+        ]);
+
+        // 1. Phone Detection
+        const phoneDetected = cocoPredictions.some(p => p.class === 'cell phone' && p.score >= EXAM_MONITOR_CONFIG.phoneConfidence);
+        if (phoneDetected) {
+          if (!trackingRef.current.phoneStart) trackingRef.current.phoneStart = now;
+          else if (now - trackingRef.current.phoneStart > EXAM_MONITOR_CONFIG.phoneConfirmationMs) {
+            triggerViolation('PHONE_DETECTED', 'Phones are not allowed');
+          }
+        } else {
+          trackingRef.current.phoneStart = 0;
+          if (trackingRef.current.lastReportedType === 'PHONE_DETECTED') clearViolation();
+        }
+
+        // 2. Multiple Person Detection
+        const persons = cocoPredictions.filter(p => p.class === 'person' && p.score >= EXAM_MONITOR_CONFIG.personConfidence);
         const currentCount = persons.length;
-        
         dispatch(setPersonCount(currentCount));
 
-        let rawState = 'ONE_PERSON';
-        if (currentCount > 1) rawState = 'MULTIPLE_PERSONS';
-        if (currentCount === 0) rawState = 'NO_PERSON';
+        if (currentCount > 1) {
+          if (!trackingRef.current.multiplePersonStart) trackingRef.current.multiplePersonStart = now;
+          else if (now - trackingRef.current.multiplePersonStart > EXAM_MONITOR_CONFIG.multiplePersonConfirmationMs) {
+            triggerViolation('MULTIPLE_PERSON', 'More than one person is not allowed');
+          }
+        } else {
+          trackingRef.current.multiplePersonStart = 0;
+          if (currentCount === 1) setProctorState('ONE_PERSON');
+          else if (currentCount === 0) setProctorState('NO_PERSON');
+          if (t.lastReportedType === 'MULTIPLE_PERSON') clearViolation();
+        }
 
-        for (let key in detectionCounts.current) {
-           if (
-             (key === '0' && rawState === 'NO_PERSON') || 
-             (key === '1' && rawState === 'ONE_PERSON') || 
-             (key === 'multiple' && rawState === 'MULTIPLE_PERSONS')
-           ) {
-             detectionCounts.current[key] += 1;
+        // 3. Face Presence & Head Direction
+        if (faces.length === 0) {
+           t.headTurnStart = 0;
+           t.headTurnNormalStart = 0;
+           t.isHeadTurn = false; 
+           
+           if (currentCount >= 1) {
+              // Person is in frame but face not detected (e.g. turned away or angle)
+              t.noFaceStart = 0;
+              if (t.isNoFace) {
+                 t.isNoFace = false;
+                 if (t.lastReportedType === 'NO_FACE') clearViolation();
+              }
+              
+              if (!t.headTurnStart) {
+                 t.headTurnStart = now;
+              } else if (now - t.headTurnStart > EXAM_MONITOR_CONFIG.headTurnDurationMs) {
+                 t.isHeadTurn = true;
+                 triggerViolation('HEAD_TURN', 'Please look at the screen');
+              }
+              
+              setDebugInfo(prev => ({ ...prev, faceDetected: 'NO', landmarks: 'NO', status: t.isHeadTurn ? 'LOOKING AWAY' : 'PERSON DETECTED (NO FACE)' }));
            } else {
-             detectionCounts.current[key] = 0;
+              if (!t.noFaceStart) {
+                 t.noFaceStart = now;
+              } else if (now - t.noFaceStart > EXAM_MONITOR_CONFIG.noFaceGracePeriodMs) {
+                 if (!t.isNoFace) {
+                    t.isNoFace = true;
+                    triggerViolation('NO_FACE', 'Please return to the camera view');
+                 } else {
+                    voiceAlertService.speakViolation('Please return to the camera view.', 'NO_FACE');
+                 }
+              }
+              setDebugInfo(prev => ({ ...prev, faceDetected: 'NO', landmarks: 'NO', status: t.isNoFace ? 'FACE NOT DETECTED' : 'GRACE PERIOD' }));
            }
+        } else {
+          // Face is present
+          t.noFaceStart = 0;
+          if (t.isNoFace) {
+             t.isNoFace = false; // Immediately clears the NO_FACE active state
+          }
+          
+          const keypoints = faces[0]?.keypoints;
+          if (keypoints && keypoints.length >= 264) {
+            const nose = keypoints[1];
+            const leftEye = keypoints[33];
+            const rightEye = keypoints[263];
+            const chin = keypoints[152];
+
+            if (leftEye && rightEye && nose && chin) {
+              // Use Math.hypot to ensure distances are positive and unaffected by mirroring
+              const distNoseLeft = Math.hypot(nose.x - leftEye.x, nose.y - leftEye.y);
+              const distNoseRight = Math.hypot(nose.x - rightEye.x, nose.y - rightEye.y);
+
+              // Yaw proxy mapped to roughly -50 to 50 "degrees"
+              const yaw = ((distNoseLeft - distNoseRight) / (distNoseLeft + distNoseRight + 0.0001)) * 100;
+
+              const eyeCenterY = (leftEye.y + rightEye.y) / 2;
+              const distNoseEyeY = nose.y - eyeCenterY;
+              const distNoseChinY = chin.y - nose.y;
+              const pitch = (distNoseEyeY / (distNoseChinY + 0.0001)) * 100;
+
+              const hp = headPoseRef.current;
+              hp.currentYaw = yaw;
+              hp.currentPitch = pitch;
+
+              if (hp.isCalibrating) {
+                hp.yawSum += yaw;
+                hp.pitchSum += pitch;
+                hp.calibrationFrames += 1;
+
+                if (hp.calibrationFrames >= 25) { // ~5 seconds at 5fps for smooth calibration
+                  hp.neutralYaw = hp.yawSum / hp.calibrationFrames;
+                  hp.neutralPitch = hp.pitchSum / hp.calibrationFrames;
+                  hp.isCalibrating = false;
+                }
+              } else {
+                const yawDiff = yaw - hp.neutralYaw;
+                const pitchDiff = pitch - hp.neutralPitch;
+
+                const YAW_THRESHOLD = EXAM_MONITOR_CONFIG.yawThreshold;
+                const PITCH_THRESHOLD = EXAM_MONITOR_CONFIG.pitchThreshold;
+
+                const isLookingLeft = yawDiff < -YAW_THRESHOLD;
+                const isLookingRight = yawDiff > YAW_THRESHOLD;
+                const isLookingUp = pitchDiff < -PITCH_THRESHOLD;
+                const isLookingDown = pitchDiff > PITCH_THRESHOLD;
+
+                if (isLookingLeft) hp.direction = 'LEFT';
+                else if (isLookingRight) hp.direction = 'RIGHT';
+                else if (isLookingUp) hp.direction = 'UP';
+                else if (isLookingDown) hp.direction = 'DOWN';
+                else hp.direction = 'CENTER';
+
+                if (isLookingLeft || isLookingRight || isLookingUp || isLookingDown) {
+                  t.isHeadTurn = true;
+                  if (!t.headTurnStart) {
+                    t.headTurnStart = now;
+                    t.headTurnNormalStart = 0;
+                  } else if (now - t.headTurnStart > EXAM_MONITOR_CONFIG.headTurnDurationMs) {
+                    triggerViolation('HEAD_TURN', 'Please look at the screen');
+                  }
+                } else {
+                  t.isHeadTurn = false;
+                  t.headTurnStart = 0;
+
+                  // Temporal smoothing for recovery (~500ms)
+                  if (t.lastReportedType === 'HEAD_TURN') {
+                    if (!t.headTurnNormalStart) {
+                      t.headTurnNormalStart = now;
+                    } else if (now - t.headTurnNormalStart > 500) {
+                      clearViolation();
+                      t.headTurnNormalStart = 0;
+                    }
+                  }
+                }
+              }
+
+              setDebugInfo({
+                faceDetected: 'YES',
+                landmarks: 'YES',
+                yaw: hp.currentYaw.toFixed(1),
+                neutralYaw: hp.neutralYaw.toFixed(1),
+                relativeYaw: (!hp.isCalibrating ? (hp.currentYaw - hp.neutralYaw).toFixed(1) : '0.0'),
+                pitch: hp.currentPitch.toFixed(1),
+                direction: hp.direction,
+                status: t.isHeadTurn ? 'LOOKING AWAY' : 'NORMAL',
+                calibrating: hp.isCalibrating ? 'NOT READY' : 'READY'
+              });
+            }
+            trackingRef.current.noFaceStart = now;
+            trackingRef.current.noFaceNormalStart = 0;
+          } else if (now - trackingRef.current.noFaceStart > EXAM_MONITOR_CONFIG.noFaceGracePeriodMs) {
+            triggerViolation('NO_FACE', 'Please return to the camera view');
+            voiceAlertService.speakViolation('Please return to the camera view.', 'NO_FACE');
+          }
+
+          setDebugInfo(prev => prev ? { ...prev, faceDetected: 'NO', landmarks: 'NO', status: 'FACE NOT DETECTED' } : null);
         }
 
-        if (rawState === 'MULTIPLE_PERSONS' && detectionCounts.current['multiple'] === CONFIRMATION_THRESHOLD && proctorState !== 'MULTIPLE_PERSONS') {
-           setProctorState('MULTIPLE_PERSONS');
-           dispatch(setWarningLevel('HIGH'));
-           playWarningSound();
-           logViolationEvent('MULTIPLE_PERSONS', currentCount, 'HIGH', 10);
-        } else if (rawState === 'NO_PERSON' && detectionCounts.current['0'] === CONFIRMATION_THRESHOLD && proctorState !== 'NO_PERSON') {
-           setProctorState('NO_PERSON');
-           dispatch(setWarningLevel('MEDIUM'));
-           logViolationEvent('NO_PERSON', 0, 'MEDIUM', 5);
-        } else if (rawState === 'ONE_PERSON' && detectionCounts.current['1'] === CONFIRMATION_THRESHOLD && proctorState !== 'ONE_PERSON') {
-           setProctorState('ONE_PERSON');
-           dispatch(setWarningLevel('SAFE'));
-           socket.socket?.emit('multiplePersonResolved', { sessionId: examId });
+        // Face returned recovery (immediate)
+        if (faces.length > 0) {
+          trackingRef.current.noFaceStart = 0;
+          trackingRef.current.noFaceNormalStart = 0;
+          if (trackingRef.current.lastReportedType === 'NO_FACE') {
+            clearViolation();
+          }
         }
+      } catch (err) {
+        // Model execution might throw if tab is backgrounded
       }
     };
 
-    if (model && isCameraActive) {
-      intervalId = setInterval(detectFrame, 500);
+    if (models.coco && models.face && isCameraActive) {
+      intervalId = setInterval(detectFrame, 200); // 5 FPS
     }
     return () => clearInterval(intervalId);
-  }, [model, isCameraActive, dispatch, examId, socket, proctorState]);
-
-  const logViolationEvent = (type, count, severity, penalty) => {
-      const ts = new Date().toISOString();
-      const eventPayload = {
-         type,
-         personCount: count,
-         timestamp: ts,
-         severity,
-         // Include legacy fields to satisfy existing backend database schemas:
-         examId,
-         questionNumber: questionNumber || 1,
-         personsDetected: count,
-         duration: 2, 
-         warningLevel: severity,
-         integrityPenalty: penalty
-      };
-      
-      if (type === 'MULTIPLE_PERSONS') {
-         toast.error('⚠ MULTIPLE PEOPLE DETECTED');
-         socket.socket?.emit('multiplePersonDetected', { sessionId: examId, personsDetected: count });
-      } else if (type === 'NO_PERSON') {
-         toast.warning('NO PERSON DETECTED');
-      }
-      
-      dispatch(deductIntegrityScore(penalty));
-      socket.socket?.emit('integrityUpdated', { sessionId: examId, newScore: Math.max(0, integrityScore - penalty) });
-      proctoringService.logViolation(eventPayload).catch(e => console.error(e));
-  };
-
-  const playWarningSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
-      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.5);
-    } catch(e) {}
-  };
-
-  const renderHeaderUI = () => {
-     if (proctorState === 'ONE_PERSON') {
-        return (
-          <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
-            <span className="flex items-center gap-1">🛡 AI PROCTOR 🟢</span>
-            <span className="text-mint">ONE PERSON</span>
-          </div>
-        );
-     }
-     if (proctorState === 'MULTIPLE_PERSONS') {
-        return (
-          <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-red-500 mb-2">
-            <span className="flex items-center gap-1"><ShieldAlert className="w-4 h-4" /> 🛡 AI PROCTOR 🔴</span>
-            <span>⚠ MULTIPLE PEOPLE DETECTED</span>
-          </div>
-        );
-     }
-     if (proctorState === 'NO_PERSON') {
-        return (
-          <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-amber-500 mb-2">
-            <span className="flex items-center gap-1"><ShieldWarning className="w-4 h-4" /> 🛡 AI PROCTOR 🟠</span>
-            <span>NO PERSON DETECTED</span>
-          </div>
-        );
-     }
-  }
-
-  const borderColor = proctorState === 'ONE_PERSON' ? 'border-hair bg-surface-2/80' : 
-                      proctorState === 'MULTIPLE_PERSONS' ? 'border-red-500 bg-red-900/20 animate-pulse' : 
-                      'border-amber-500 bg-amber-900/20';
-                      
-  const cameraBorder = proctorState === 'ONE_PERSON' ? 'border-slate-700/50' : 
-                       proctorState === 'MULTIPLE_PERSONS' ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' :
-                       'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]';
+  }, [models, isCameraActive, dispatch, triggerViolation, clearViolation]);
 
   return (
-    <div className={`relative flex flex-col p-3 rounded-2xl border backdrop-blur-md shadow-lg transition-colors ${borderColor}`}>
-      
-      {renderHeaderUI()}
+    <div className="relative flex flex-col p-3 rounded-2xl border backdrop-blur-md shadow-lg transition-colors border-hair bg-surface-2/80">
+
+      <ExamViolationAlert activeViolation={activeViolation} />
+
+      <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider mb-2">
+        {activeViolation ? (
+          <span className="flex items-center gap-1 text-red-500"><ShieldAlert className="w-4 h-4" /> 🛡 AI PROCTOR 🔴</span>
+        ) : (
+          <span className="flex items-center gap-1 text-slate-300">🛡 AI PROCTOR 🟢</span>
+        )}
+        <span className={activeViolation ? "text-red-500 font-bold" : "text-mint"}>
+          {activeViolation ? 'ATTENTION REQUIRED' : 'MONITORING ACTIVE'}
+        </span>
+      </div>
+
       <div className="text-center text-[10px] text-slate-500 mb-1 uppercase tracking-widest font-bold">LIVE CAMERA</div>
 
-      <div className={`relative overflow-hidden rounded-xl border-2 transition-all bg-black ${cameraBorder}`}>
+      <div className={`relative overflow-hidden rounded-xl border-2 transition-all bg-black ${activeViolation ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'border-slate-700/50'}`}>
         <video
           ref={videoRef}
           autoPlay
@@ -247,26 +405,45 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
         />
         {!isCameraActive && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center text-[11px] text-slate-400">
-            <span className={cameraStatus.includes('error') || cameraStatus.includes('unavailable') || cameraStatus.includes('required') || cameraStatus.includes('access is required') ? "text-red-400 font-medium" : ""}>
-               {cameraStatus}
+            <span className={cameraStatus.includes('error') || cameraStatus.includes('unavailable') || cameraStatus.includes('required') ? "text-red-400 font-medium" : ""}>
+              {cameraStatus}
             </span>
           </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center text-xs font-semibold px-1 mt-2">
-        <div className="flex flex-col text-left">
-          <span className="text-slate-500">People detected</span>
-          <span className={proctorState !== 'ONE_PERSON' ? (proctorState === 'MULTIPLE_PERSONS' ? 'text-red-400 font-bold' : 'text-amber-400 font-bold') : 'text-slate-200'}>
-            {personCount}
-          </span>
+      <div className="mt-3 bg-black/40 rounded-lg p-2 flex flex-col gap-1">
+        <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider border-b border-white/10 pb-1 mb-1">
+          Violations: {violationCounts.headTurn + violationCounts.multiplePerson + violationCounts.phone + violationCounts.noFace}
         </div>
-        <div className="flex flex-col text-right">
-          <span className="text-slate-500">Integrity</span>
-          <span className={integrityScore < 70 ? 'text-red-400 font-bold' : 'text-mint'}>
-            {integrityScore}%
-          </span>
+        <div className="flex justify-between text-xs text-slate-300">
+          <span>Looking Away:</span>
+          <span className={violationCounts.headTurn > 0 ? "text-red-400 font-bold" : ""}>{violationCounts.headTurn}</span>
         </div>
+        <div className="flex justify-between text-xs text-slate-300">
+          <span>Multiple People:</span>
+          <span className={violationCounts.multiplePerson > 0 ? "text-red-400 font-bold" : ""}>{violationCounts.multiplePerson}</span>
+        </div>
+        <div className="flex justify-between text-xs text-slate-300">
+          <span>Phone Detected:</span>
+          <span className={violationCounts.phone > 0 ? "text-red-400 font-bold" : ""}>{violationCounts.phone}</span>
+        </div>
+        <div className="flex justify-between text-xs text-slate-300">
+          <span>Student Not Visible:</span>
+          <span className={violationCounts.noFace > 0 ? "text-red-400 font-bold" : ""}>{violationCounts.noFace}</span>
+        </div>
+      </div>
+
+      <div className="mt-3 bg-black/80 rounded-lg p-3 flex flex-col gap-1 text-[11px] text-cyan-400 font-mono tracking-wider border border-cyan-500/30">
+        <div className="text-center mb-1 font-bold text-white border-b border-cyan-500/30 pb-1">HEAD DETECTION DEBUG</div>
+        <div className="flex justify-between"><span>Face detected:</span><span>{debugInfo.faceDetected}</span></div>
+        <div className="flex justify-between"><span>Landmarks:</span><span>{debugInfo.landmarks}</span></div>
+        <div className="flex justify-between mt-1 border-t border-cyan-500/10 pt-1"><span>Yaw:</span><span>{debugInfo.yaw}°</span></div>
+        <div className="flex justify-between text-cyan-600"><span>Neutral yaw:</span><span>{debugInfo.neutralYaw}°</span></div>
+        <div className="flex justify-between font-bold text-cyan-300"><span>Relative yaw:</span><span>{debugInfo.relativeYaw}°</span></div>
+        <div className="flex justify-between mt-1 border-t border-cyan-500/10 pt-1"><span>Direction:</span><span>{debugInfo.direction}</span></div>
+        <div className="flex justify-between"><span>Head state:</span><span className={debugInfo.status === 'LOOKING AWAY' || debugInfo.status === 'FACE NOT DETECTED' ? 'text-red-400 font-bold' : ''}>{debugInfo.status}</span></div>
+        <div className="flex justify-between mt-1 border-t border-cyan-500/10 pt-1"><span>Calibration:</span><span className={debugInfo.calibrating === 'NOT READY' ? 'text-yellow-400' : 'text-green-400'}>{debugInfo.calibrating}</span></div>
       </div>
     </div>
   );

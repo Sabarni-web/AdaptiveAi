@@ -16,7 +16,7 @@ import { logger } from '../utils/logger';
 export class ExamOrchestrator {
   async startExam(studentId: string, payload: any): Promise<IExamSession> {
     const { domain, subject, questionType, numberOfQuestions, language } = payload;
-    
+
     const matchQuery: any = { domain, subject, isActive: true };
     if (questionType && questionType !== 'Mixed') {
       matchQuery.questionType = questionType;
@@ -45,7 +45,7 @@ export class ExamOrchestrator {
       status: 'in_progress',
       startedAt: new Date(),
     });
-    
+
     await session.save();
     return session;
   }
@@ -57,7 +57,7 @@ export class ExamOrchestrator {
       return { isStop: true };
     }
     if (session.status !== 'in_progress') throw new Error('Invalid session status');
-    
+
     const answeredCount = session.questionsAsked.length;
     const questionLimit = session.numberOfQuestions;
 
@@ -152,7 +152,7 @@ export class ExamOrchestrator {
         } else {
           // For SAQs, the correct answer to show should be the expected explanation or answer, not "Option A"
           correctAnswer = question.answerExplanation || question.correctAnswer || '';
-          
+
           // Use AI to evaluate SAQ answers against the explanation/expected answer
           const [aiResult, aiDetected] = await Promise.all([
             aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || ''),
@@ -166,9 +166,10 @@ export class ExamOrchestrator {
         askedQuestion.isCorrect = isCorrect;
         askedQuestion.aiExplanation = explanation;
 
-        const oldAbility = session.currentAbility;
+        const oldAbility = session.currentAbility || 0;
         session.currentAbility = isCorrect ? oldAbility + 0.5 : oldAbility - 0.5;
 
+        session.abilityHistory = session.abilityHistory || [];
         session.abilityHistory.push({
           questionIndex: session.questionsAsked.length - 1,
           ability: session.currentAbility,
@@ -294,8 +295,8 @@ export class ExamOrchestrator {
         const qDetail = questions.find(q => q._id.toString() === qa.questionId.toString());
         let studentAnswerText = qa.answer;
         if (qDetail && qDetail.questionType === 'MCQ') {
-           const selectedOpt = (qDetail.options || []).find((o: any) => o.key === qa.answer);
-           if (selectedOpt) studentAnswerText = selectedOpt.text;
+          const selectedOpt = (qDetail.options || []).find((o: any) => o.key === qa.answer);
+          if (selectedOpt) studentAnswerText = selectedOpt.text;
         }
         return {
           question: qDetail ? {

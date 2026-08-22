@@ -232,7 +232,7 @@ Key behaviors:
       return result.response.text();
     } catch (error: any) {
       logger.error(`[AI_SERVICE] askTutor failed: ${error.message}`);
-      throw new Error('AI processing failed');
+      return "I'm sorry, but I am currently unavailable to answer questions (AI service error). Please try again later.";
     }
   }
 

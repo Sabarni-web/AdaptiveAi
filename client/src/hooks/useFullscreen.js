@@ -31,21 +31,23 @@ export const useFullscreen = () => {
         await element.msRequestFullscreen();
       }
     } catch (e) {
-      console.error('Fullscreen request failed:', e);
+      // Silently ignore fullscreen errors
     }
   };
 
   const exit = async () => {
     try {
-      if (document.exitFullscreen) {
-        await document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        await document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        await document.msExitFullscreen();
+      if (document.fullscreenElement) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
       }
     } catch (e) {
-      console.error('Fullscreen exit failed:', e);
+      // Silently ignore fullscreen errors
     }
   };
 
