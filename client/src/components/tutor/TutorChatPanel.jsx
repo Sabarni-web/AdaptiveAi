@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Send, Trash2, BookOpen, Lightbulb, HelpCircle, Loader2 } from 'lucide-react';
+import { X, Minus, Send, Trash2, BookOpen, Lightbulb, HelpCircle, Loader2, Mic, Volume2, Square } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import tutorService from '../../services/tutorService';
 import { Button } from '../common/Button';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis';
+import { useSettings } from '../../hooks/useSettings';
 
 export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
   const [messages, setMessages] = useState(() => {
@@ -18,22 +21,66 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
   
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeSpeechMsgId, setActiveSpeechMsgId] = useState(null);
+  const [wasVoiceInitiated, setWasVoiceInitiated] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const { settings } = useSettings();
+  const voiceSettings = settings?.voice || { inputEnabled: true, responsesEnabled: true, language: 'en-US' };
+
+  const { speak, stop: stopSpeech, isSpeaking } = useSpeechSynthesis();
+
+  const handleSpeechResult = ({ transcript, isFinal }) => {
+    if (isFinal) {
+      setInput(transcript);
+      setWasVoiceInitiated(true);
+      // Automatically send if it's a final result
+      setTimeout(() => {
+        handleSend(transcript, 'user', true);
+      }, 300);
+    } else {
+      setInput(transcript);
+    }
+  };
+
+  const { isListening, isSupported: isSpeechSupported, startListening, stopListening } = useSpeechRecognition({
+    language: voiceSettings.language,
+    onResult: handleSpeechResult
+  });
+
+  useEffect(() => {
+    if (!isSpeaking) {
+      setActiveSpeechMsgId(null);
+    }
+  }, [isSpeaking]);
 
   useEffect(() => {
     localStorage.setItem('adaptiveAI_tutor_history', JSON.stringify(messages));
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
-  const handleSend = async (text = input, role = 'user') => {
+  useEffect(() => {
+    return () => {
+      stopListening();
+      stopSpeech();
+    };
+  }, [stopListening, stopSpeech]);
+
+  const handleSend = async (text = input, role = 'user', fromVoice = false) => {
     if (!text.trim() || isLoading) return;
     
+    // Stop any ongoing speech when sending a new message
+    stopSpeech();
+
     const userMessage = { id: Date.now().toString(), role, content: text, timestamp: new Date().toISOString() };
     const newHistory = [...messages, userMessage];
     
     if (role === 'user') {
       setMessages(newHistory);
       setInput('');
+      if (!fromVoice) {
+         setWasVoiceInitiated(false);
+      }
     }
 
     setIsLoading(true);
@@ -46,12 +93,21 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
         
       const response = await tutorService.askDoubt(backendHistory);
       
+      const aiMsgId = (Date.now() + 1).toString();
       setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
+        id: aiMsgId,
         role: 'ai',
         content: response.answer,
         timestamp: new Date().toISOString()
       }]);
+
+      // Auto-speak if it was voice initiated or if responses are always enabled
+      if (voiceSettings.responsesEnabled && (fromVoice || wasVoiceInitiated)) {
+        setTimeout(() => {
+           speak(response.answer, voiceSettings.language);
+           setActiveSpeechMsgId(aiMsgId);
+        }, 100);
+      }
     } catch (error) {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
@@ -151,17 +207,48 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
               </div>
               
               {/* Quick Actions (only show on last AI message if not loading) */}
-              {msg.role === 'ai' && !msg.isError && i === messages.length - 1 && !isLoading && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <button onClick={() => handleAction('simpler')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-primary-400 flex items-center gap-1 transition-colors">
-                    <BookOpen size={12} /> Explain Simpler
-                  </button>
-                  <button onClick={() => handleAction('example')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-mint flex items-center gap-1 transition-colors">
-                    <Lightbulb size={12} /> Give Example
-                  </button>
-                  <button onClick={() => handleAction('quiz')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-purple-400 flex items-center gap-1 transition-colors">
-                    <HelpCircle size={12} /> Quiz Me
-                  </button>
+              {msg.role === 'ai' && !msg.isError && (
+                <div className="flex flex-col gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2">
+                    {i === messages.length - 1 && !isLoading && (
+                      <>
+                        <button onClick={() => handleAction('simpler')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-primary-400 flex items-center gap-1 transition-colors">
+                          <BookOpen size={12} /> Explain Simpler
+                        </button>
+                        <button onClick={() => handleAction('example')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-mint flex items-center gap-1 transition-colors">
+                          <Lightbulb size={12} /> Give Example
+                        </button>
+                        <button onClick={() => handleAction('quiz')} className="text-[11px] bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2 py-1 rounded-full text-purple-400 flex items-center gap-1 transition-colors">
+                          <HelpCircle size={12} /> Quiz Me
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* Speaker Button */}
+                    <button 
+                      onClick={() => {
+                        if (activeSpeechMsgId === msg.id && isSpeaking) {
+                          stopSpeech();
+                          setActiveSpeechMsgId(null);
+                        } else {
+                          speak(msg.content, voiceSettings.language);
+                          setActiveSpeechMsgId(msg.id);
+                        }
+                      }}
+                      className={`text-[11px] border px-2 py-1 rounded-full flex items-center gap-1 transition-colors ${
+                        activeSpeechMsgId === msg.id && isSpeaking 
+                          ? 'bg-red-900/30 border-red-500/30 text-red-400 hover:bg-red-900/50' 
+                          : 'bg-gray-900 hover:bg-gray-800 border-gray-800 text-gray-400 hover:text-white'
+                      }`}
+                      aria-label={activeSpeechMsgId === msg.id && isSpeaking ? "Stop speech" : "Read answer aloud"}
+                    >
+                      {activeSpeechMsgId === msg.id && isSpeaking ? (
+                         <><Square size={10} className="fill-current" /> Stop Speaking</>
+                      ) : (
+                         <><Volume2 size={12} /> Speak</>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -177,26 +264,59 @@ export const TutorChatPanel = ({ isOpen, onClose, onMinimize }) => {
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-gray-800 bg-black">
+      <div className="p-3 border-t border-gray-800 bg-black flex flex-col gap-2">
+        {isListening && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center gap-2 text-red-400 text-xs px-2"
+          >
+            <motion.div 
+              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              className="w-2 h-2 rounded-full bg-red-500"
+            />
+            Listening...
+          </motion.div>
+        )}
         <form 
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-          className="relative flex items-center"
+          className="relative flex items-center gap-2"
         >
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask your doubt..."
-            disabled={isLoading}
-            className="w-full bg-gray-900 border border-gray-800 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="absolute right-2 p-1.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Send size={16} />
-          </button>
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask your doubt..."
+              disabled={isLoading || isListening}
+              className="w-full bg-gray-900 border border-gray-800 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading || isListening}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+          
+          {voiceSettings.inputEnabled && isSpeechSupported && (
+            <button
+              type="button"
+              onClick={isListening ? stopListening : () => startListening(voiceSettings.language)}
+              disabled={isLoading}
+              className={`p-3 rounded-xl flex items-center justify-center transition-all ${
+                isListening 
+                  ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                  : 'bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-800'
+              } disabled:opacity-50`}
+              aria-label={isListening ? "Stop voice input" : "Start voice input"}
+            >
+              <Mic size={20} className={isListening ? 'animate-pulse' : ''} />
+            </button>
+          )}
         </form>
       </div>
     </motion.div>

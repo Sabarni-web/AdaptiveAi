@@ -208,25 +208,47 @@ Key behaviors:
 7. If the user asks for a quiz ("Quiz Me"), provide a single, conceptual multiple-choice question on the topic they were just studying, labeled clearly as a quiz.
 `;
 
-      const formattedHistory = conversationHistory.map(msg => ({
+      let formattedHistory = conversationHistory.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
+        parts: [{ text: msg.content || ' ' }]
       }));
 
-      // Initialize a new chat session to use system instructions (via generating with context or starting chat)
-      // The easiest way in Gemini SDK is to use startChat with history, but system instruction requires the model to be initialized with it, 
-      // or we can just prepend the system instruction to the very first user message if it's not supported directly in the basic setup.
-      // Assuming google/generative-ai version supports systemInstruction in getGenerativeModel:
+      // Ensure history strictly alternates and starts with user
+      const sanitizedHistory: any[] = [];
+      let expectedRole = 'user';
+      for (const msg of formattedHistory) {
+        if (msg.role === expectedRole) {
+          sanitizedHistory.push(msg);
+          expectedRole = expectedRole === 'user' ? 'model' : 'user';
+        } else if (sanitizedHistory.length > 0) {
+          // Merge with previous if it's the same role
+          sanitizedHistory[sanitizedHistory.length - 1].parts[0].text += '\n\n' + msg.parts[0].text;
+        }
+      }
+
+      if (sanitizedHistory.length === 0) {
+        throw new Error('Valid history is empty after sanitization');
+      }
+
+      // If the last message is from 'model', we pop it since the current prompt must be from 'user'
+      if (sanitizedHistory[sanitizedHistory.length - 1].role === 'model') {
+        sanitizedHistory.pop();
+      }
+      
+      if (sanitizedHistory.length === 0) {
+         throw new Error('No user message found to prompt');
+      }
+
       const tutorModel = this.genAI.getGenerativeModel({ 
         model: 'gemini-flash-latest',
         systemInstruction: systemInstruction 
       });
 
       const chat = tutorModel.startChat({
-        history: formattedHistory.slice(0, -1), // All except the last message which is the current prompt
+        history: sanitizedHistory.slice(0, -1), // All except the last message which is the current prompt
       });
 
-      const lastMessage = formattedHistory[formattedHistory.length - 1]?.parts[0]?.text || '';
+      const lastMessage = sanitizedHistory[sanitizedHistory.length - 1]?.parts[0]?.text || '';
       const result = await chat.sendMessage(lastMessage);
       
       return result.response.text();

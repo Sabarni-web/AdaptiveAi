@@ -5,7 +5,7 @@ import { PageHeader } from '../components/common/PageHeader';
 import { Button } from '../components/common/Button';
 import { Loader } from '../components/common/Loader';
 import { useSettings } from '../hooks/useSettings';
-import { SettingsSummary, AppearanceSettings, AiLearningSettings, StudySettings, NotificationSettings, DailyChallengeSettings, ExamSettings, AccessibilitySettings, SoundSettings, SecuritySettings, DataPrivacySettings } from '../components/settings/SettingsComponents';
+import { SettingsSummary, AppearanceSettings, AiLearningSettings, StudySettings, NotificationSettings, DailyChallengeSettings, ExamSettings, AccessibilitySettings, SoundSettings, SecuritySettings, DataPrivacySettings, VoiceSettings } from '../components/settings/SettingsComponents';
 import { Save, RotateCcw } from 'lucide-react';
 
 export const Settings = () => {
@@ -83,6 +83,7 @@ export const Settings = () => {
           <ExamSettings watch={watch} setValue={setValue} />
           <AccessibilitySettings register={register} watch={watch} setValue={setValue} />
           <SoundSettings watch={watch} setValue={setValue} />
+          <VoiceSettings register={register} watch={watch} setValue={setValue} />
           <SecuritySettings />
           <DataPrivacySettings />
 
