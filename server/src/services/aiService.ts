@@ -239,21 +239,37 @@ Key behaviors:
          throw new Error('No user message found to prompt');
       }
 
-      const tutorModel = this.genAI.getGenerativeModel({ 
-        model: 'gemini-flash-latest',
-        systemInstruction: systemInstruction 
-      });
-
-      const chat = tutorModel.startChat({
-        history: sanitizedHistory.slice(0, -1), // All except the last message which is the current prompt
-      });
-
-      const lastMessage = sanitizedHistory[sanitizedHistory.length - 1]?.parts[0]?.text || '';
-      const result = await chat.sendMessage(lastMessage);
+      let lastError;
       
-      return result.response.text();
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const tutorModel = this.genAI.getGenerativeModel({ 
+            model: 'gemini-flash-latest',
+            systemInstruction: systemInstruction 
+          });
+
+          const chat = tutorModel.startChat({
+            history: sanitizedHistory.slice(0, -1), // All except the last message which is the current prompt
+          });
+
+          const lastMessage = sanitizedHistory[sanitizedHistory.length - 1]?.parts[0]?.text || '';
+          const result = await chat.sendMessage(lastMessage);
+          
+          return result.response.text();
+        } catch (error: any) {
+          logger.warn(`[AI_SERVICE] askTutor attempt ${attempt} failed: ${error.message}`);
+          lastError = error;
+          if (attempt < 3) {
+            // Wait with exponential backoff (1s, then 2s) to help with rate limits
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
+        }
+      }
+
+      logger.error(`[AI_SERVICE] askTutor completely failed after 3 attempts: ${lastError.message}`);
+      return "I'm sorry, but I am currently unavailable to answer questions (AI service error). Please try again later.";
     } catch (error: any) {
-      logger.error(`[AI_SERVICE] askTutor failed: ${error.message}`);
+      logger.error(`[AI_SERVICE] askTutor fatal error: ${error.message}`);
       return "I'm sorry, but I am currently unavailable to answer questions (AI service error). Please try again later.";
     }
   }

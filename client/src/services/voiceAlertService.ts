@@ -24,6 +24,7 @@ class VoiceAlertService {
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
+    utterance.onerror = () => {}; // Silence browser console errors for interrupted speech
 
     window.speechSynthesis.speak(utterance);
     this.lastAlertTime[type] = now;

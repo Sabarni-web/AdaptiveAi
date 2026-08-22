@@ -68,7 +68,6 @@ export const useSpeechSynthesis = () => {
     };
 
     utterance.onerror = (e) => {
-      console.error('Speech synthesis error', e);
       setIsSpeaking(false);
     };
 
