@@ -12,7 +12,7 @@ export const CertificatePreview = ({
   certificateId = 'CERT-000000',
 }) => {
   const handleDownloadPDF = () => {
-    window.open(`http://localhost:5000/api/v1/certificates/download/${certificateId}`, '_blank');
+    window.open(`${import.meta.env.VITE_API_URL}/certificates/download/${certificateId}`, '_blank');
   };
 
   const handleShare = (platform) => {

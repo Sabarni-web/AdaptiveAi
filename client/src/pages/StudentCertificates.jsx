@@ -89,7 +89,7 @@ export const StudentCertificates = () => {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(`http://localhost:5000/api/v1/certificates/download/${cert.certificateId}`, '_blank');
+                      window.open(`${import.meta.env.VITE_API_URL}/certificates/download/${cert.certificateId}`, '_blank');
                     }}
                     className="flex-1 flex items-center justify-center gap-2 py-2 bg-surface-2 hover:bg-surface-3 rounded-lg text-sm font-medium transition-colors"
                   >

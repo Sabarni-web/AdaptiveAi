@@ -111,7 +111,7 @@ export const CertificateDashboard = () => {
                     <td className="py-3 text-right">
                       <div className="flex justify-end gap-2">
                         <button 
-                          onClick={() => window.open(`http://localhost:5000/api/v1/certificates/download/${cert.certificateId}`, '_blank')}
+                          onClick={() => window.open(`${import.meta.env.VITE_API_URL}/certificates/download/${cert.certificateId}`, '_blank')}
                           className="p-2 text-secondary hover:text-indigo-500 transition-colors"
                           title="Download PDF"
                         >

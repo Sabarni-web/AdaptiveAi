@@ -8,7 +8,7 @@ export const CertificateViewer = ({ certificate, isPublic = false }) => {
   if (!certificate) return null;
 
   const handleDownloadPDF = () => {
-    window.open(`http://localhost:5000/api/v1/certificates/download/${certificate.certificateId}`, '_blank');
+    window.open(`${import.meta.env.VITE_API_URL}/certificates/download/${certificate.certificateId}`, '_blank');
   };
 
   const handleShare = (platform) => {
