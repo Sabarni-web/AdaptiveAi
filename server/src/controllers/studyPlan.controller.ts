@@ -176,6 +176,18 @@ export const getTodayPlan = async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
+    if (error?.code === 11000) {
+      try {
+        const todayDate = new Date().toISOString().split('T')[0];
+        const userId = req.user?.userId;
+        const existingPlan = await DailyStudyPlan.findOne({ userId, date: todayDate });
+        if (existingPlan) {
+          return res.status(200).json({ success: true, plan: existingPlan });
+        }
+      } catch (err) {
+        // Fall through to 500
+      }
+    }
     console.error('Error generating study plan:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }

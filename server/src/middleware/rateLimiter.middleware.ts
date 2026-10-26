@@ -1,11 +1,14 @@
 import { RateLimiterRedis } from 'rate-limiter-flexible';
 import { redis } from '../config/redis';
 import { Request, Response, NextFunction } from 'express';
+import { env } from '../config/env';
+
+const isDev = env.NODE_ENV === 'development';
 
 const generalLimiter = new RateLimiterRedis({
   storeClient: redis,
   keyPrefix: 'middleware',
-  points: 100, // 100 requests
+  points: isDev ? 2000 : 300, // relaxed during development to prevent 429 locks
   duration: 15 * 60, // per 15 minutes by IP
 });
 
@@ -25,6 +28,11 @@ const examLimiter = new RateLimiterRedis({
 
 export const rateLimiter = (type: 'general' | 'auth' | 'exam' = 'general') => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Skip rate limiting for CORS preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+
     try {
       let key = req.ip || 'unknown';
       let limiter = generalLimiter;

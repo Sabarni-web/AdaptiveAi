@@ -27,11 +27,14 @@ import { setupSwagger } from './config/swagger';
 const app = express();
 
 // Middleware
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: false,
+}));
 app.use(cors({
-  origin: '*', // Allow all origins for development (or specify 'http://localhost:5173')
+  origin: true, // Echoes the request origin (e.g. http://localhost:5173), allowing credentials and all local ports
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(
