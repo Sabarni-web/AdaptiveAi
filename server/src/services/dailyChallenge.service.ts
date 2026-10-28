@@ -20,6 +20,86 @@ export class DailyChallengeService {
   }
 
   /**
+   * Recalculate and synchronize the user's active streak based on challenge submission history.
+   * If today or yesterday has a completed correct challenge, streak is maintained.
+   * Otherwise if more than 1 day was missed, active streak resets to 0.
+   */
+  static async syncUserStreak(userId: string): Promise<number> {
+    const user = await User.findById(userId);
+    if (!user) return 0;
+    if (!user.gamification) {
+      user.gamification = { xp: 0, currentStreak: 0, longestStreak: 0, totalChallengesCompleted: 0 };
+    }
+
+    const todayStr = this.getTodayDateStr();
+    const yesterdayStr = this.getYesterdayDateStr();
+
+    // Find all completed correct challenges sorted from newest to oldest
+    const correctChallenges = await DailyChallenge.find({
+      userId,
+      isCorrect: true,
+      status: 'completed'
+    }).sort({ challengeDate: -1 });
+
+    if (correctChallenges.length === 0) {
+      if (user.gamification.currentStreak !== 0) {
+        user.gamification.currentStreak = 0;
+        await user.save();
+      }
+      return 0;
+    }
+
+    const latestDateStr = correctChallenges[0].challengeDate;
+    // Streak is active only if the most recent correct challenge was today or yesterday
+    if (latestDateStr !== todayStr && latestDateStr !== yesterdayStr) {
+      if (user.gamification.currentStreak !== 0) {
+        user.gamification.currentStreak = 0;
+        await user.save();
+      }
+      return 0;
+    }
+
+    // Count consecutive days backward
+    let streak = 0;
+    let expectedDate = new Date();
+    // If completed today, check backwards starting today; else if yesterday, start yesterday
+    if (latestDateStr === todayStr) {
+      expectedDate = new Date();
+    } else {
+      expectedDate.setDate(expectedDate.getDate() - 1);
+    }
+
+    const completedDatesSet = new Set(correctChallenges.map(c => c.challengeDate));
+
+    while (true) {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: TIMEZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const checkStr = formatter.format(expectedDate);
+
+      if (completedDatesSet.has(checkStr)) {
+        streak++;
+        expectedDate.setDate(expectedDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    if (user.gamification.currentStreak !== streak) {
+      user.gamification.currentStreak = streak;
+      if (streak > (user.gamification.longestStreak || 0)) {
+        user.gamification.longestStreak = streak;
+      }
+      await user.save();
+    }
+
+    return streak;
+  }
+
+  /**
    * Get an existing challenge for a user for today.
    */
   static async getTodayChallenge(userId: string) {
@@ -132,36 +212,13 @@ export class DailyChallengeService {
         user.gamification = { xp: 0, currentStreak: 0, longestStreak: 0, totalChallengesCompleted: 0 };
       }
 
-      // Check streak logic (only based on correct answers)
-      if (isCorrect) {
-        const yesterdayStr = this.getYesterdayDateStr();
-        const yesterdayChallenge = await DailyChallenge.findOne({ 
-          userId, 
-          challengeDate: yesterdayStr, 
-          isCorrect: true 
-        });
-
-        if (yesterdayChallenge || user.gamification.currentStreak === 0) {
-           // Streak continues or starts
-           user.gamification.currentStreak += 1;
-        } else {
-           // Missed yesterday or got it wrong yesterday, streak resets to 1 (since they got it right today)
-           user.gamification.currentStreak = 1;
-        }
-      } else {
-        // If they get it wrong or time out, the streak resets to 0
-        user.gamification.currentStreak = 0;
-      }
-
-      if (user.gamification.currentStreak > user.gamification.longestStreak) {
-        user.gamification.longestStreak = user.gamification.currentStreak;
-      }
-
       user.gamification.xp += xpEarned;
       user.gamification.totalChallengesCompleted += 1;
-      
       await user.save();
-      challenge.streakAfterCompletion = user.gamification.currentStreak;
+
+      // Recalculate streak cleanly based on chronological completed days
+      const currentStreak = await this.syncUserStreak(userId);
+      challenge.streakAfterCompletion = currentStreak;
     }
 
     await challenge.save();
@@ -172,7 +229,7 @@ export class DailyChallengeService {
       correctAnswer: question.correctAnswer,
       explanation: question.answerExplanation,
       xpEarned,
-      streak: user?.gamification?.currentStreak || 0
+      streak: challenge.streakAfterCompletion || 0
     };
   }
 

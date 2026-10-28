@@ -8,8 +8,7 @@ export const getTodayChallenge = async (req: Request, res: Response) => {
     const userId = (req as any).user?.userId || (req as any).user?.id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    const user = await User.findById(userId).select('gamification');
-    const currentStreak = user?.gamification?.currentStreak || 0;
+    const currentStreak = await DailyChallengeService.syncUserStreak(userId);
 
     const challenge = await DailyChallengeService.getTodayChallenge(userId);
     if (!challenge) {
@@ -71,6 +70,7 @@ export const getStats = async (req: Request, res: Response) => {
     const userId = (req as any).user?.userId || (req as any).user?.id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
+    const currentStreak = await DailyChallengeService.syncUserStreak(userId);
     const user = await User.findById(userId).select('gamification');
     
     // Calculate accuracy
@@ -80,7 +80,7 @@ export const getStats = async (req: Request, res: Response) => {
     const accuracy = completedChallenges > 0 ? (correctChallenges / completedChallenges) * 100 : 0;
 
     return res.status(200).json({
-      currentStreak: user?.gamification?.currentStreak || 0,
+      currentStreak,
       longestStreak: user?.gamification?.longestStreak || 0,
       totalCompleted: completedChallenges,
       correctCount: correctChallenges,

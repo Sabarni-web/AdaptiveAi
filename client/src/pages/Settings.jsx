@@ -72,18 +72,22 @@ export const Settings = () => {
       />
 
       <div className="max-w-4xl mx-auto w-full flex flex-col md:flex-row gap-6 relative">
-        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col gap-6 w-full">
-          <SettingsSummary settings={watch()} />
-          
-          <AppearanceSettings register={register} watch={watch} setValue={setValue} />
-          <AiLearningSettings register={register} watch={watch} setValue={setValue} />
-          <StudySettings register={register} watch={watch} setValue={setValue} />
-          <NotificationSettings watch={watch} setValue={setValue} />
-          <DailyChallengeSettings register={register} watch={watch} setValue={setValue} />
-          <ExamSettings watch={watch} setValue={setValue} />
-          <AccessibilitySettings register={register} watch={watch} setValue={setValue} />
-          <SoundSettings watch={watch} setValue={setValue} />
-          <VoiceSettings register={register} watch={watch} setValue={setValue} />
+        <div className="flex-1 flex flex-col gap-6 w-full">
+          <form id="settings-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 w-full">
+            <SettingsSummary settings={watch()} />
+            
+            <AppearanceSettings register={register} watch={watch} setValue={setValue} />
+            <AiLearningSettings register={register} watch={watch} setValue={setValue} />
+            <StudySettings register={register} watch={watch} setValue={setValue} />
+            <NotificationSettings watch={watch} setValue={setValue} />
+            <DailyChallengeSettings register={register} watch={watch} setValue={setValue} />
+            <ExamSettings watch={watch} setValue={setValue} />
+            <AccessibilitySettings register={register} watch={watch} setValue={setValue} />
+            <SoundSettings watch={watch} setValue={setValue} />
+            <VoiceSettings register={register} watch={watch} setValue={setValue} />
+          </form>
+
+          {/* Security & Data Privacy sections (Independent of settings form) */}
           <SecuritySettings />
           <DataPrivacySettings />
 
@@ -96,12 +100,12 @@ export const Settings = () => {
             </div>
             <div className="flex items-center gap-4">
               {hasUnsavedChanges && <span className="text-sm text-yellow-500 hidden md:inline">Unsaved changes</span>}
-              <Button type="submit" variant="primary" disabled={isSaving || !hasUnsavedChanges} isLoading={isSaving}>
+              <Button form="settings-form" type="submit" variant="primary" disabled={isSaving || !hasUnsavedChanges} isLoading={isSaving}>
                 <Save className="w-4 h-4 mr-2" /> Save Settings
               </Button>
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

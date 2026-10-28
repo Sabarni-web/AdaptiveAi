@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { ExamSession } from '../models/ExamSession';
 import { Result } from '../models/Result';
 import { logger } from '../utils/logger';
+import { DailyChallengeService } from '../services/dailyChallenge.service';
 import mongoose from 'mongoose';
 
 export const getIntelligenceProfile = async (req: Request, res: Response): Promise<void> => {
@@ -14,6 +15,7 @@ export const getIntelligenceProfile = async (req: Request, res: Response): Promi
     }
 
     // 1. Fetch User Data
+    await DailyChallengeService.syncUserStreak(userId);
     const user = await User.findById(userId).select('-password');
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });

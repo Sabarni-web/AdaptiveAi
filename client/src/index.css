@@ -233,3 +233,22 @@ body.light .tile-red {
   .animate-particle-2 { animation: aiParticle 4s ease-in-out infinite alternate-reverse; }
   .animate-particle-3 { animation: aiParticle 5s ease-in-out infinite alternate; }
 }
+
+/* Daily Challenge Ambient Glow & Shimmer */
+@keyframes ambientGlowPulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.08); }
+}
+
+@keyframes laserShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-glow-pulse {
+  animation: ambientGlowPulse 4s ease-in-out infinite;
+}
+
+.animate-laser-shimmer {
+  animation: laserShimmer 3.5s infinite;
+}

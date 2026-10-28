@@ -95,18 +95,19 @@ export const Dashboard = () => {
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       <PageHeader
-        title={
-          <div className="flex items-center gap-3">
-            <span>Welcome back, {user?.name || 'Student'}</span>
-            {currentStreak > 0 && (
-              <div className="flex items-center gap-1.5 text-orange-400 text-sm md:text-lg bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
-                <Flame className="w-5 h-5 md:w-6 md:h-6 fill-orange-400" />
-                <span>{currentStreak} Day Streak</span>
-              </div>
-            )}
-          </div>
-        }
+        title={`Welcome back, ${user?.name || 'Student'}`}
         description="Select an available evaluation test to start or view past performance certificates."
+        actions={[
+          <div
+            key="streak-badge"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 font-bold text-sm shadow-[0_0_15px_rgba(249,115,22,0.15)] hover:bg-orange-500/20 transition-all cursor-pointer"
+            onClick={() => navigate('/daily-challenge')}
+            title="Daily Challenge Streak"
+          >
+            <Flame className={`w-5 h-5 ${currentStreak > 0 ? 'fill-orange-400 text-orange-400 animate-pulse' : 'text-slate-400 fill-slate-400'}`} />
+            <span>{currentStreak} Day Streak</span>
+          </div>
+        ]}
       />
 
       {/* TOP ROW: Daily Challenge & AI Brain Visualization */}
