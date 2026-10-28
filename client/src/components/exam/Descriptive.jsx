@@ -72,6 +72,10 @@ export const Descriptive = ({
             Characters: {charCount} / {maxLength}
           </span>
         </div>
+        <div className="flex items-center gap-1.5 text-xs text-amber-400/90 font-medium bg-amber-950/30 px-2.5 py-1 rounded-lg border border-amber-500/20">
+          <span>🛡️ AI Detection Active</span>
+          <span className="text-[10px] text-amber-300/70">(Max 10% allowed)</span>
+        </div>
       </div>
     </div>
   );

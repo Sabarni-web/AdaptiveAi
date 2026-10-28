@@ -110,10 +110,11 @@ export const Exam = () => {
 
     if (response) {
       setFeedback(response);
+      const delay = response.isAIGenerated ? 4500 : 2500;
       setTimeout(async () => {
         setFeedback(null);
         await loadNextQuestion(sessionId);
-      }, 2000);
+      }, delay);
     }
   };
 
@@ -214,22 +215,49 @@ export const Exam = () => {
             <div className="mt-6 w-full max-w-3xl animate-fade-in">
               <div className={`p-4 rounded-xl border ${feedback.isCorrect ? 'bg-green-900/30 border-green-500 text-green-100' : 'bg-red-900/30 border-red-500 text-red-100'}`}>
                 <h3 className="text-xl font-bold mb-2">
-                  {feedback.isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+                  {feedback.isAIGenerated
+                    ? '❌ Rejected (AI Content Detected)'
+                    : (feedback.isCorrect ? '✅ Correct!' : '❌ Incorrect')}
                 </h3>
-                {feedback.isAIGenerated && (
-                  <div className="mb-3 p-3 bg-red-950/80 border border-red-500 rounded-lg animate-pulse">
-                    <p className="text-red-400 font-bold flex items-center gap-2">
-                      <span className="text-xl">⚠️</span> AI-Generated Content Detected!
-                    </p>
-                    <p className="text-xs text-red-300 mt-1">Your answer was flagged as highly likely to be AI-generated ({feedback.aiPercentage}% match).</p>
+                {/* AI Detection Banner */}
+                {typeof feedback.aiPercentage === 'number' && (
+                  <div className={`mb-3 p-3 rounded-lg border flex items-center justify-between ${
+                    feedback.isAIGenerated
+                      ? 'bg-red-950/80 border-red-500 text-red-200'
+                      : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
+                  }`}>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl">{feedback.isAIGenerated ? '⚠️' : '🛡️'}</span>
+                      <div>
+                        <p className="font-bold text-sm">
+                          {feedback.isAIGenerated
+                            ? `AI-Generated Content Detected (${feedback.aiPercentage}% match)`
+                            : `AI Content Check Passed (${feedback.aiPercentage}% match)`}
+                        </p>
+                        <p className="text-xs opacity-80 mt-0.5">
+                          {feedback.isAIGenerated
+                            ? 'Exceeds the 10% maximum allowable threshold. AI answers are strictly rejected.'
+                            : 'Within allowable threshold (≤10%). Verified as authentic student answer.'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider ${
+                      feedback.isAIGenerated ? 'bg-red-900/60 text-red-300 border border-red-700' : 'bg-emerald-900/60 text-emerald-300 border border-emerald-700'
+                    }`}>
+                      {feedback.isAIGenerated ? 'Rejected' : 'Verified'}
+                    </span>
                   </div>
                 )}
-                {!feedback.isCorrect && (
+                {!feedback.isCorrect && !feedback.isAIGenerated && (
                   <p className="mb-2"><strong>Correct Answer:</strong> {feedback.correctAnswer}</p>
                 )}
-                <p className="text-sm opacity-90"><strong>Explanation:</strong> {feedback.explanation}</p>
-                {feedback.isCorrect && (
+                <p className="text-sm opacity-90 whitespace-pre-line"><strong>Explanation:</strong> {feedback.explanation}</p>
+                {feedback.isCorrect ? (
                   <p className="mt-2 text-sm font-semibold text-green-300">+{feedback.marksAwarded} Marks Awarded</p>
+                ) : (
+                  <p className="mt-2 text-sm font-semibold text-red-400">
+                    +0 Marks Awarded {feedback.isAIGenerated ? '(AI-Generated Answer Not Accepted)' : ''}
+                  </p>
                 )}
               </div>
             </div>

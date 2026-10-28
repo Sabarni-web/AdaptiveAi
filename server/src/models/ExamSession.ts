@@ -26,6 +26,8 @@ export interface IExamSession extends Document {
     isCorrect?: boolean;
     informationGain?: number;
     aiExplanation?: string;
+    isAIGenerated?: boolean;
+    aiPercentage?: number;
   }>;
   stopReason?: 'precision_reached' | 'max_questions' | 'time_up' | 'manual' | 'force_submitted';
   totalQuestions: number;
@@ -74,6 +76,8 @@ const ExamSessionSchema = new Schema<IExamSession>(
       isCorrect: Boolean,
       informationGain: Number,
       aiExplanation: String,
+      isAIGenerated: { type: Boolean, default: false },
+      aiPercentage: { type: Number, default: 0 },
     }],
     stopReason: { type: String, enum: ['precision_reached', 'max_questions', 'time_up', 'manual', 'force_submitted'] },
     totalQuestions: { type: Number, default: 0 },

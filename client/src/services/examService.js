@@ -186,10 +186,19 @@ const examService = {
         const baseQuestionId = questionId.split('-')[0];
         const question = MOCK_QUESTIONS.find((q) => q.id === baseQuestionId);
         let isCorrect = false;
+        let isAIGenerated = false;
+        let aiPercentage = 0;
         if (question?.type === 'MCQ') {
           isCorrect = answer === question.correctOption;
         } else {
-          isCorrect = answer.length > 30; // descriptive simple check
+          const lower = (answer || '').toLowerCase();
+          if (lower.includes('as an ai') || lower.includes('language model') || lower.includes('furthermore,') || lower.includes('in conclusion')) {
+            isAIGenerated = true;
+            aiPercentage = 95;
+            isCorrect = false;
+          } else {
+            isCorrect = answer.length > 30; // descriptive simple check
+          }
         }
 
         // Adjust theta ability score
@@ -208,8 +217,12 @@ const examService = {
           ability: sessionState.ability,
           success: true,
           isCorrect,
+          isAIGenerated,
+          aiPercentage,
           correctAnswer: question?.correctOption || question?.modelAnswer || 'Correct Answer Unavailable',
-          explanation: question?.explanation || 'No explanation provided in mock data.',
+          explanation: isAIGenerated
+            ? `AI-Generated Content Detected (${aiPercentage}% match). AI-generated answers are not accepted.`
+            : (question?.explanation || 'No explanation provided in mock data.'),
           marksAwarded: isCorrect ? question?.marks : 0,
         };
       }

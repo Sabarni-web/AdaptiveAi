@@ -153,15 +153,34 @@ export class ExamOrchestrator {
           // For SAQs, the correct answer to show should be the expected explanation or answer, not "Option A"
           correctAnswer = question.answerExplanation || question.correctAnswer || '';
 
-          // Use AI to evaluate SAQ answers against the explanation/expected answer
-          const [aiResult, aiDetected] = await Promise.all([
-            aiService.evaluateSAQ(question.questionText, answer, question.answerExplanation || ''),
-            aiService.detectAIGeneratedText(answer)
-          ]);
-          isCorrect = aiResult.isCorrect;
-          explanation = aiResult.explanation;
-          (askedQuestion as any).isAIGenerated = aiDetected.isAIGenerated; // For schema flexibility
-          (askedQuestion as any).aiPercentage = aiDetected.aiPercentage;
+          const trimmedAnswer = (answer || '').trim();
+          if (!trimmedAnswer || trimmedAnswer.toUpperCase() === 'SKIP') {
+            isCorrect = false;
+            explanation = 'Question was skipped or not answered.';
+            askedQuestion.isAIGenerated = false;
+            askedQuestion.aiPercentage = 0;
+          } else {
+            // Use AI to evaluate SAQ answers against the explanation/expected answer
+            const [aiResult, aiDetected] = await Promise.all([
+              aiService.evaluateSAQ(question.questionText, trimmedAnswer, question.answerExplanation || ''),
+              aiService.detectAIGeneratedText(trimmedAnswer)
+            ]);
+
+            const aiPercentage = typeof aiDetected.aiPercentage === 'number' ? aiDetected.aiPercentage : (aiDetected.isAIGenerated ? 85 : 0);
+            // Strict 10% tolerance threshold: any score strictly above 10% is marked as AI-generated and rejected
+            const isAI = Boolean(aiPercentage > 10 || aiDetected.isAIGenerated);
+            askedQuestion.isAIGenerated = isAI;
+            askedQuestion.aiPercentage = aiPercentage;
+
+            if (isAI) {
+              // AI-generated answers above 10% are strictly NOT accepted
+              isCorrect = false;
+              explanation = `AI-Generated Content Detected (${aiPercentage}% match). Only up to 10% AI similarity is accepted. AI-generated answers are not accepted in this examination.${aiResult.explanation ? `\n\nEvaluation note: ${aiResult.explanation}` : ''}`;
+            } else {
+              isCorrect = aiResult.isCorrect;
+              explanation = aiResult.explanation;
+            }
+          }
         }
         askedQuestion.isCorrect = isCorrect;
         askedQuestion.aiExplanation = explanation;
@@ -183,8 +202,8 @@ export class ExamOrchestrator {
       isCorrect,
       correctAnswer,
       explanation,
-      isAIGenerated: (askedQuestion as any)?.isAIGenerated || false,
-      aiPercentage: (askedQuestion as any)?.aiPercentage || 0,
+      isAIGenerated: askedQuestion?.isAIGenerated || false,
+      aiPercentage: askedQuestion?.aiPercentage || 0,
       marksAwarded: isCorrect ? 2 : 0,
       ability: session.currentAbility,
       success: true
@@ -310,7 +329,9 @@ export class ExamOrchestrator {
           isCorrect: qa.isCorrect,
           marksObtained: qa.isCorrect ? 2 : 0,
           maxMarks: 2,
-          aiExplanation: qa.aiExplanation || qDetail?.answerExplanation || 'Explanation not available.'
+          aiExplanation: qa.aiExplanation || qDetail?.answerExplanation || 'Explanation not available.',
+          isAIGenerated: qa.isAIGenerated || false,
+          aiPercentage: qa.aiPercentage || 0
         };
       })
     };
