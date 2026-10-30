@@ -8,16 +8,8 @@ export const LookingAwayWarning = () => {
   const [visible, setVisible] = useState(false);
   
   useEffect(() => {
-    let timer;
-    if (focusStatus === 'LOOKING_AWAY') {
-      // Delay showing warning by 3 seconds
-      timer = setTimeout(() => {
-        setVisible(true);
-      }, 3000);
-    } else {
-      setVisible(false);
-    }
-    return () => clearTimeout(timer);
+    // Show immediately when looking away; hide immediately when looking back at screen
+    setVisible(focusStatus === 'LOOKING_AWAY');
   }, [focusStatus]);
 
   return (

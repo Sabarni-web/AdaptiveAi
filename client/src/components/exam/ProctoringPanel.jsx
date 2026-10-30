@@ -6,25 +6,25 @@ import { setPersonCount, setWarningLevel, deductIntegrityScore, incrementViolati
 import proctoringService from '../../services/proctoringService';
 import { useSocket } from '../../hooks/useSocket';
 import '@tensorflow/tfjs';
+import '@tensorflow/tfjs-backend-webgl';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import { voiceAlertService } from '../../services/voiceAlertService';
 import { ExamViolationAlert } from './ExamViolationAlert';
 
 const EXAM_MONITOR_CONFIG = {
-  headTurnDurationMs: 1400, // Require sustained head turn (>1.4s) before flagging
-  noFaceGracePeriodMs: 3500, // Grace period before reporting student not visible
-  lostFaceGracePeriodMs: 2500, // Grace period when person is detected but face mesh temporarily lost
-  phoneConfirmationMs: 350, // Trigger promptly on phone presence
-  multiplePersonConfirmationMs: 600, // Confirmation time for multiple persons
-  phoneConfidence: 0.38, // Optimized threshold to capture phones held in hand or on desk
-  personConfidence: 0.30, // Confident person threshold
-  yawThreshold: 22, // Natural angle allowing scanning questions across screen without false triggers
-  pitchThreshold: 25 // Natural angle allowing looking down at keyboard/bottom of screen
+  headTurnDurationMs: 400, // 400ms: prompt alert when student turns head away
+  noFaceGracePeriodMs: 1500, // 1.5s: prompt alert when student disappears/leaves camera
+  phoneConfirmationMs: 1000, // 1.0s sustained visibility to avoid false positives on hands/mics/pens
+  multiplePersonConfirmationMs: 800, // 800ms
+  phoneConfidence: 0.70, // High confidence threshold so fingers/shadows/headphones aren't flagged as phones
+  personConfidence: 0.35, // Reliable person detection
+  yawThreshold: 22, // Natural angle for wide screen reading
+  pitchThreshold: 24 // Natural angle for keyboard / down angle
 };
 
 // Target classes from COCO-SSD associated with phones and mobile devices
-const PHONE_CLASSES = new Set(['cell phone', 'remote', 'electronic device', 'telephone']);
+const PHONE_CLASSES = new Set(['cell phone', 'telephone']);
 
 export const ProctoringPanel = ({ examId, questionNumber }) => {
   const dispatch = useDispatch();
@@ -83,6 +83,8 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
   });
 
   const isDetectingRef = useRef(false);
+  const lastCocoTimeRef = useRef(0);
+  const cachedCocoPredictionsRef = useRef([]);
 
   useEffect(() => {
     let localStream = null;
@@ -160,6 +162,9 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
 
     setActiveViolation({ type, message });
     trackingRef.current.lastReportedType = type;
+    setTimeout(() => {
+      setActiveViolation(prev => (prev?.type === type ? null : prev));
+    }, 3500);
     voiceAlertService.speakViolation(message, type);
 
     setViolationCounts(prev => ({
@@ -210,7 +215,7 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
         videoRef.current.readyState < 2 ||
         isDetectingRef.current
       ) {
-        animFrameId = setTimeout(detectFrame, 120);
+        animFrameId = setTimeout(detectFrame, 50);
         return;
       }
 
@@ -220,10 +225,17 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
       const videoEl = videoRef.current;
 
       try {
-        const [cocoPredictions, faces] = await Promise.all([
-          models.coco.detect(videoEl),
-          models.face.estimateFaces(videoEl, { flipHorizontal: false })
-        ]);
+        // Interleaved inference: Run COCO-SSD every ~300ms to preserve GPU/CPU performance,
+        // and run face mesh on every cycle for ultra-responsive head pose tracking.
+        let cocoPredictions = cachedCocoPredictionsRef.current;
+        if (now - lastCocoTimeRef.current >= 300) {
+          const cocoRes = await models.coco.detect(videoEl);
+          cocoPredictions = cocoRes || [];
+          cachedCocoPredictionsRef.current = cocoPredictions;
+          lastCocoTimeRef.current = now;
+        }
+
+        const faces = await models.face.estimateFaces(videoEl, { flipHorizontal: false, staticImageMode: false });
 
         // Draw bounding boxes on canvas for live proctor feedback
         const canvas = canvasRef.current;
@@ -268,7 +280,7 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
           }
         }
 
-        // 1. Phone Detection (Checks 'cell phone', 'remote', 'telephone' etc.)
+        // 1. Phone Detection (Checks 'cell phone', 'telephone')
         const detectedPhoneObj = cocoPredictions.find(
           p => PHONE_CLASSES.has(p.class.toLowerCase()) && p.score >= EXAM_MONITOR_CONFIG.phoneConfidence
         );
@@ -284,7 +296,7 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
           t.phoneStart = 0;
           if (t.lastReportedType === 'PHONE_DETECTED') {
             if (!t.phoneNormalStart) t.phoneNormalStart = now;
-            else if (now - t.phoneNormalStart > 400) {
+            else if (now - t.phoneNormalStart > 300) {
               clearViolation();
               t.phoneNormalStart = 0;
             }
@@ -292,7 +304,6 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
         }
 
         // 2. Multiple Person Detection
-        // Count persons from COCO-SSD and distinct faces from Face Mesh
         const personBoxes = cocoPredictions.filter(
           p => p.class === 'person' && p.score >= EXAM_MONITOR_CONFIG.personConfidence
         );
@@ -305,6 +316,16 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
 
         if (effectivePeopleCount >= 1) {
           t.lastPersonSeenTime = now;
+          // If student was marked away, immediately clear NO_FACE when student appears
+          if (t.isNoFace || t.lastReportedType === 'NO_FACE') {
+            t.isNoFace = false;
+            t.noFaceStart = 0;
+            clearViolation();
+            dispatch(setHeadPose({
+              headDirection: 'FORWARD',
+              focusStatus: 'FOCUSED'
+            }));
+          }
         }
 
         if (effectivePeopleCount > 1) {
@@ -320,7 +341,7 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
 
           if (t.lastReportedType === 'MULTIPLE_PERSON') {
             if (!t.multiplePersonNormalStart) t.multiplePersonNormalStart = now;
-            else if (now - t.multiplePersonNormalStart > 400) {
+            else if (now - t.multiplePersonNormalStart > 300) {
               clearViolation();
               t.multiplePersonNormalStart = 0;
             }
@@ -364,16 +385,16 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
               hp.currentYaw = yaw;
               hp.currentPitch = pitch;
 
-              // Fast calibration when facing forward
+              // Fast calibration (first 4 frames)
               if (hp.isCalibrating) {
-                if (Math.abs(yaw) < 12 && pitch > 65 && pitch < 135) {
+                if (Math.abs(yaw) < 20) {
                   hp.yawSum += yaw;
                   hp.pitchSum += pitch;
                   hp.calibrationFrames += 1;
 
-                  if (hp.calibrationFrames >= 6) {
-                    hp.neutralYaw = Math.max(-8, Math.min(8, hp.yawSum / hp.calibrationFrames));
-                    hp.neutralPitch = Math.max(80, Math.min(120, hp.pitchSum / hp.calibrationFrames));
+                  if (hp.calibrationFrames >= 4) {
+                    hp.neutralYaw = Math.max(-10, Math.min(10, hp.yawSum / hp.calibrationFrames));
+                    hp.neutralPitch = Math.max(50, Math.min(150, hp.pitchSum / hp.calibrationFrames));
                     hp.isCalibrating = false;
                   }
                 }
@@ -397,7 +418,6 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
 
               if (isLookingAway) {
                 t.isHeadTurn = true;
-                t.headTurnNormalStart = 0;
                 if (!t.headTurnStart) {
                   t.headTurnStart = now;
                 } else if (now - t.headTurnStart > EXAM_MONITOR_CONFIG.headTurnDurationMs) {
@@ -410,23 +430,20 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
                   }));
                 }
               } else {
+                // STUDENT IS LOOKING AT THE SCREEN (NORMAL / FOCUSED)
                 t.isHeadTurn = false;
                 t.headTurnStart = 0;
 
-                if (t.lastReportedType === 'HEAD_TURN') {
-                  if (!t.headTurnNormalStart) {
-                    t.headTurnNormalStart = now;
-                  } else if (now - t.headTurnNormalStart > 350) {
-                    clearViolation();
-                    t.headTurnNormalStart = 0;
-                    dispatch(setHeadPose({
-                      headDirection: 'FORWARD',
-                      yaw,
-                      pitch,
-                      focusStatus: 'FOCUSED'
-                    }));
-                  }
+                // Immediately clear any head turn or no face violation
+                if (t.lastReportedType === 'HEAD_TURN' || t.lastReportedType === 'NO_FACE') {
+                  clearViolation();
                 }
+                dispatch(setHeadPose({
+                  headDirection: 'FORWARD',
+                  yaw,
+                  pitch,
+                  focusStatus: 'FOCUSED'
+                }));
               }
 
               setDebugInfo({
@@ -437,48 +454,56 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
                 relativeYaw: (!hp.isCalibrating ? yawDiff.toFixed(1) : '0.0'),
                 pitch: hp.currentPitch.toFixed(1),
                 direction: hp.direction,
-                status: t.isHeadTurn ? 'LOOKING AWAY' : phoneDetected ? 'PHONE DETECTED' : effectivePeopleCount > 1 ? 'MULTIPLE PEOPLE' : 'NORMAL',
+                status: t.isHeadTurn ? 'LOOKING AWAY' : phoneDetected ? 'PHONE DETECTED' : effectivePeopleCount > 1 ? 'MULTIPLE PEOPLE' : 'FOCUSED',
                 calibrating: hp.isCalibrating ? 'CALIBRATING' : 'READY'
               });
             }
           }
         } else {
-          // Face mesh keypoints NOT detected in this frame (faces.length === 0)
+          // Face mesh keypoints NOT detected in this frame
           if (isPersonPresent) {
-            // Student is in frame and centered (confirmed by COCO-SSD person detection).
-            // Do NOT trigger HEAD_TURN or penalize looking away!
-            t.headTurnStart = 0;
-            t.headTurnNormalStart = 0;
-            t.isHeadTurn = false;
-            t.lostFaceStart = 0;
-            t.noFaceStart = 0;
-            t.isNoFace = false;
+            const timeSinceFaceSeen = now - t.lastFaceSeenTime;
+            const wasAlreadyLookingAway = headPoseRef.current.direction !== 'CENTER' && headPoseRef.current.direction !== 'FORWARD';
 
-            // If a previous head turn or no face violation was active, clear it now
-            if (t.lastReportedType === 'HEAD_TURN' || t.lastReportedType === 'NO_FACE') {
-              clearViolation();
+            if (wasAlreadyLookingAway && timeSinceFaceSeen > 500) {
+              // User turned head away (e.g. profile view) and lost landmarks because of the turn
+              t.isHeadTurn = true;
+              if (!t.headTurnStart) {
+                t.headTurnStart = now;
+              } else if (now - t.headTurnStart > EXAM_MONITOR_CONFIG.headTurnDurationMs) {
+                triggerViolation('HEAD_TURN', 'Please look at the screen');
+                dispatch(setHeadPose({
+                  headDirection: headPoseRef.current.direction || 'AWAY',
+                  focusStatus: 'LOOKING_AWAY'
+                }));
+              }
+              setDebugInfo(prev => ({
+                ...prev,
+                faceDetected: 'TURNED AWAY',
+                landmarks: 'LOST',
+                status: 'LOOKING AWAY'
+              }));
+            } else {
+              // Person is sitting normally facing camera, but face mesh briefly missed (lighting / camera warmup)
+              t.isHeadTurn = false;
+              t.headTurnStart = 0;
+              if (t.lastReportedType === 'HEAD_TURN' || t.lastReportedType === 'NO_FACE') {
+                clearViolation();
+              }
+              dispatch(setHeadPose({
+                headDirection: 'FORWARD',
+                focusStatus: 'FOCUSED'
+              }));
+              setDebugInfo(prev => ({
+                ...prev,
+                faceDetected: 'PRESENT (CENTERED)',
+                landmarks: 'TRACKING',
+                status: 'FOCUSED'
+              }));
             }
-
-            // Keep status as FOCUSED so the "Please Look at the Screen" banner does NOT pop up
-            dispatch(setHeadPose({
-              headDirection: 'FORWARD',
-              yaw: 0,
-              pitch: 0,
-              focusStatus: 'FOCUSED'
-            }));
-
-            setDebugInfo(prev => ({
-              ...prev,
-              faceDetected: 'PRESENT (MONITORING)',
-              landmarks: 'TRACKING',
-              direction: 'CENTER',
-              status: phoneDetected ? 'PHONE DETECTED' : effectivePeopleCount > 1 ? 'MULTIPLE PEOPLE' : 'FOCUSED'
-            }));
           } else {
             // Neither person nor face detected: student stepped away from camera
             t.headTurnStart = 0;
-            t.headTurnNormalStart = 0;
-            t.lostFaceStart = 0;
             t.isHeadTurn = false;
 
             if (!t.noFaceStart) {
@@ -500,6 +525,7 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
               ...prev,
               faceDetected: 'NO',
               landmarks: 'NO',
+              direction: 'AWAY',
               status: t.isNoFace ? 'STUDENT NOT VISIBLE' : 'AWAY (GRACE PERIOD)'
             }));
           }
@@ -508,12 +534,12 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
         // Model execution might throw if tab is backgrounded
       } finally {
         isDetectingRef.current = false;
-        animFrameId = setTimeout(detectFrame, 120);
+        animFrameId = setTimeout(detectFrame, 50);
       }
     };
 
     if (models.coco && models.face && isCameraActive) {
-      animFrameId = setTimeout(detectFrame, 120);
+      animFrameId = setTimeout(detectFrame, 50);
     }
     return () => clearTimeout(animFrameId);
   }, [models, isCameraActive, dispatch, triggerViolation, clearViolation]);
@@ -587,8 +613,8 @@ export const ProctoringPanel = ({ examId, questionNumber }) => {
         <div className="flex justify-between text-cyan-600"><span>Neutral yaw:</span><span>{debugInfo.neutralYaw}°</span></div>
         <div className="flex justify-between font-bold text-cyan-300"><span>Relative yaw:</span><span>{debugInfo.relativeYaw}°</span></div>
         <div className="flex justify-between mt-1 border-t border-cyan-500/10 pt-1"><span>Direction:</span><span>{debugInfo.direction}</span></div>
-        <div className="flex justify-between"><span>Head state:</span><span className={debugInfo.status === 'LOOKING AWAY' || debugInfo.status === 'FACE NOT DETECTED' ? 'text-red-400 font-bold' : ''}>{debugInfo.status}</span></div>
-        <div className="flex justify-between mt-1 border-t border-cyan-500/10 pt-1"><span>Calibration:</span><span className={debugInfo.calibrating === 'NOT READY' ? 'text-yellow-400' : 'text-green-400'}>{debugInfo.calibrating}</span></div>
+        <div className="flex justify-between"><span>Head state:</span><span className={debugInfo.status === 'LOOKING AWAY' || debugInfo.status === 'STUDENT NOT VISIBLE' ? 'text-red-400 font-bold' : ''}>{debugInfo.status}</span></div>
+        <div className="flex justify-between mt-1 border-t border-cyan-500/10 pt-1"><span>Calibration:</span><span className={debugInfo.calibrating === 'CALIBRATING' || debugInfo.calibrating === 'WAITING' ? 'text-yellow-400' : 'text-green-400'}>{debugInfo.calibrating}</span></div>
       </div>
     </div>
   );

@@ -110,7 +110,7 @@ export const Exam = () => {
 
     if (response) {
       setFeedback(response);
-      const delay = response.isAIGenerated ? 4500 : 2500;
+      const delay = response.isAIGenerated ? 1200 : 800;
       setTimeout(async () => {
         setFeedback(null);
         await loadNextQuestion(sessionId);
